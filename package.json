@@ -91,17 +91,17 @@
     "@types/react-dom": "^19",
     "@types/ssh2": "^1.15.6",
     "@types/ws": "^8.18.1",
-    "@typescript-eslint/parser": "^8.70.0",
+    "@typescript-eslint/parser": "^8.70.1",
     "eslint": "^10",
-    "eslint-config-next": "16.3.5",
-    "openai": "7.18.0",
-    "prettier": "^3.9.8",
+    "eslint-config-next": "16.3.6",
+    "openai": "7.23.0",
+    "prettier": "^3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "prisma": "^7.10.0",
     "sharp": "^0.35.4",
     "tailwindcss": "^4",
     "typescript": "^6",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.2"
   },
   "pnpm": {
     "overrides": {
