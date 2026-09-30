@@ -13,6 +13,8 @@ describe('StatusBadge', () => {
     expect(statusTone('BUILDING')).toBe('warning');
     expect(statusTone('FAILED')).toBe('destructive');
     expect(statusTone('STOPPED')).toBe('muted');
+    expect(statusTone('DISCONNECTED')).toBe('destructive');
+    expect(statusTone('UNREACHABLE')).toBe('destructive');
   });
   it('renders unknown statuses as a muted sentence-case label instead of crashing', () => {
     render(<StatusBadge status="PROVISIONING_DISK" />);

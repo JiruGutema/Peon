@@ -250,7 +250,10 @@ function SourceGeneralForm({ source }: { source: SourceDetail }) {
                 label: 'Status',
                 value: (
                   <span className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status={status} />
+                    <StatusBadge
+                      status={status}
+                      tone={status === 'SUSPENDED' ? 'warning' : undefined}
+                    />
                     <span className="text-muted-foreground">
                       {status === 'CONNECTED'
                         ? 'Connected via Peon GitHub App'
