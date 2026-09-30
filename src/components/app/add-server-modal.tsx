@@ -201,7 +201,7 @@ export function AddServerModal({ workspaceId: wsId, open, onOpenChange }: AddSer
                 </div>
                 <Link
                   href="/keys-and-tokens"
-                  className="text-phosphor text-[11px] underline-offset-2 hover:underline"
+                  className="text-primary text-sm underline-offset-2 hover:underline"
                   onClick={() => onOpenChange(false)}
                 >
                   Keys &amp; Tokens → SSH Keys
@@ -218,11 +218,11 @@ export function AddServerModal({ workspaceId: wsId, open, onOpenChange }: AddSer
                   options={(keys ?? []).map((k) => ({ value: k.id, label: k.name }))}
                 />
               ) : (
-                <p className="text-muted-foreground border-border/60 rounded-md border border-dashed px-3 py-2 text-xs">
+                <p className="text-muted-foreground border-border/60 rounded-md border px-3 py-2 text-sm">
                   No SSH keys in this workspace yet. Generate one below, or create one under{' '}
                   <Link
                     href="/keys-and-tokens"
-                    className="text-phosphor underline-offset-2 hover:underline"
+                    className="text-primary underline-offset-2 hover:underline"
                     onClick={() => onOpenChange(false)}
                   >
                     Keys &amp; Tokens
@@ -246,7 +246,7 @@ export function AddServerModal({ workspaceId: wsId, open, onOpenChange }: AddSer
                 </Button>
               ) : (
                 <div className="border-border bg-secondary/40 space-y-3 rounded-md border p-3">
-                  <p className="text-muted-foreground text-[11px] leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     Creates an ed25519 keypair in this workspace and selects it for this server.
                     Copy the public key onto the host before Connect.
                   </p>
@@ -284,9 +284,9 @@ export function AddServerModal({ workspaceId: wsId, open, onOpenChange }: AddSer
               )}
 
               {createdPublicKey ? (
-                <div className="border-border bg-[#0a0f0c] space-y-2 rounded-md border p-3">
+                <div className="border-border bg-secondary space-y-2 rounded-md border p-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-muted-foreground font-mono text-[10px] tracking-wide uppercase">
+                    <span className="text-muted-foreground text-xs font-medium">
                       Public key — add to server
                     </span>
                     <Button type="button" size="sm" variant="outline" onClick={() => void copyPublicKey()}>
@@ -294,12 +294,12 @@ export function AddServerModal({ workspaceId: wsId, open, onOpenChange }: AddSer
                       {copiedPub ? 'Copied' : 'Copy'}
                     </Button>
                   </div>
-                  <code className="text-phosphor/90 block max-h-24 overflow-auto break-all font-mono text-[10.5px] leading-relaxed">
+                  <code className="text-foreground block max-h-24 overflow-auto break-all font-mono text-xs leading-relaxed">
                     {createdPublicKey}
                   </code>
-                  <p className="text-muted-foreground text-[11px] leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     On the host (as <span className="text-foreground/80">{user || 'root'}</span>):
-                    append this line to <code className="text-[10.5px]">~/.ssh/authorized_keys</code>,
+                    append this line to <code className="text-xs">~/.ssh/authorized_keys</code>,
                     then continue with Add server → Connect.
                   </p>
                 </div>

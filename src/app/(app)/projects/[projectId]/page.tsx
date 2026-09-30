@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { Suspense, use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -15,7 +14,9 @@ import {
   type ServiceKind,
   type ServiceListItem,
 } from '@/services/api/service';
-import { PageContainer, Panel, Section } from '@/components/app/page';
+import { PageContainer, PageHeader } from '@/components/app/page';
+import { DataTable } from '@/components/app/data-table';
+import { LocalDateTime } from '@/components/app/local-datetime';
 import { TemplateMarketplaceDialog } from '@/components/app/template-marketplace';
 import { EmptyState } from '@/components/app/empty-state';
 import { StatusBadge } from '@/components/app/status-badge';
@@ -72,9 +73,20 @@ function ProjectDetail_({ params }: { params: Promise<{ projectId: string }> }) 
 
   return (
     <PageContainer>
-      {tab === 'services' && (
-        <ServicesTab projectId={projectId} canManage={data?.canManage ?? false} />
-      )}
+      <PageHeader
+        title={data?.project.name ?? 'Project'}
+        description={data ? data.project.description || 'No description' : undefined}
+        actions={
+          tab === 'services' && data?.canManage ? (
+            <>
+              <TemplateMarketplaceDialog projectId={projectId} />
+              <NewServiceDialog projectId={projectId} />
+            </>
+          ) : undefined
+        }
+      />
+
+      {tab === 'services' && <ServicesTab projectId={projectId} />}
 
       {tab === 'members' && (
         <ProjectMembersTab
@@ -100,62 +112,43 @@ function ProjectDetail_({ params }: { params: Promise<{ projectId: string }> }) 
   );
 }
 
-function ServicesTab({ projectId, canManage }: { projectId: string; canManage: boolean }) {
+function ServicesTab({ projectId }: { projectId: string }) {
   const { data: services, isLoading } = useProjectServices(projectId);
 
   return (
-    <Section
-      title="services"
-      description="applications, databases, and compose stacks in this project"
-      actions={
-        canManage ? (
-          <div className="flex items-center gap-2">
-            <TemplateMarketplaceDialog projectId={projectId} />
-            <NewServiceDialog projectId={projectId} />
-          </div>
-        ) : undefined
-      }
-    >
-      {isLoading ? (
-        <div className="bg-accent h-40 animate-pulse rounded-lg" />
-      ) : services && services.length > 0 ? (
-        <Panel title="services">
-          <div className="divide-y">
-            {services.map((svc: ServiceListItem) => (
-              <Link
-                key={svc.id}
-                href={`/projects/${projectId}/services/${svc.id}`}
-                className="hover:bg-secondary flex items-center justify-between gap-4 px-4 py-3 transition-colors"
-              >
-                <div className="min-w-0">
-                  <div className="text-[12.5px] font-semibold">{svc.name}</div>
-                  <div className="text-muted-foreground truncate text-[11px]">
-                    {svc.description || KIND_LABELS[svc.kind]}
-                  </div>
-                </div>
-                <div className="flex shrink-0 items-center gap-3">
-                  <KindChip kind={svc.kind} />
-                  <StatusBadge status={svc.status} />
-                </div>
-              </Link>
-            ))}
-          </div>
-        </Panel>
-      ) : (
+    <DataTable<ServiceListItem>
+      columns={[
+        {
+          key: 'name',
+          header: 'Name',
+          cell: (svc) => (
+            <span className="flex min-w-0 flex-col">
+              <span className="truncate">{svc.name}</span>
+              <span className="text-muted-foreground truncate text-sm font-normal">
+                {svc.description || KIND_LABELS[svc.kind]}
+              </span>
+            </span>
+          ),
+        },
+        { key: 'kind', header: 'Kind', cell: (svc) => <KindChip kind={svc.kind} /> },
+        { key: 'status', header: 'Status', cell: (svc) => <StatusBadge status={svc.status} /> },
+        {
+          key: 'updated',
+          header: 'Created',
+          cell: (svc) => <LocalDateTime value={svc.createdAt} />,
+        },
+      ]}
+      rows={services ?? []}
+      rowKey={(svc) => svc.id}
+      rowHref={(svc) => `/projects/${projectId}/services/${svc.id}`}
+      isLoading={isLoading}
+      emptyState={
         <EmptyState
           icon={Boxes}
           title="No services yet"
           description="Create your first application, database, or compose stack in this project."
-          action={
-            canManage ? (
-              <div className="flex items-center gap-2">
-                <TemplateMarketplaceDialog projectId={projectId} />
-                <NewServiceDialog projectId={projectId} />
-              </div>
-            ) : undefined
-          }
         />
-      )}
-    </Section>
+      }
+    />
   );
 }

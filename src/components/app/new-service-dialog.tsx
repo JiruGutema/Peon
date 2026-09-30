@@ -271,7 +271,7 @@ export function NewServiceDialog({
                     }))}
                   />
                   {!servers?.length && (
-                    <p className="text-muted-foreground text-[11px]">
+                    <p className="text-muted-foreground text-sm">
                       Add and validate a server before creating deployable services.
                     </p>
                   )}
@@ -411,7 +411,7 @@ export function NewServiceDialog({
                     {gitAppProvider === 'github' && selectedGithubAppId ? (
                       <>
                         {selectedGithubSource?.status && selectedGithubSource.status !== 'CONNECTED' ? (
-                          <p className="text-muted-foreground text-[12px]">
+                          <p className="text-muted-foreground text-sm">
                             This GitHub connection is {selectedGithubSource.status.toLowerCase()}. Reconnect
                             under Git Sources before creating a service.
                           </p>
@@ -544,7 +544,7 @@ export function NewServiceDialog({
                   }))}
                 />
                 {!servers?.length && (
-                  <p className="text-muted-foreground text-[11px]">
+                  <p className="text-muted-foreground text-sm">
                     Add and validate a server before creating deployable services.
                   </p>
                 )}

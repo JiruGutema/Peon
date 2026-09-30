@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { FolderKanban, Server, GitBranch, Database, ArrowRight, Boxes, KeyRound, Plus } from 'lucide-react';
-import { PageContainer, Panel } from '@/components/app/page';
+import { FolderKanban, Server, GitBranch, Database, Boxes, KeyRound, Plus } from 'lucide-react';
+import { PageContainer, PageHeader, Panel } from '@/components/app/page';
 import { StatCard } from '@/components/app/stat-card';
 import { EmptyState } from '@/components/app/empty-state';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/app/status-badge';
+import { ListRow } from '@/components/app/list-row';
 import { AddServerModal } from '@/components/app/add-server-modal';
 import { useAuthStore } from '@/store/auth';
 import { listProjects } from '@/services/api/project';
@@ -16,10 +16,10 @@ import { listServers } from '@/services/api/server';
 import { listPrivateKeys } from '@/services/api/privatekey';
 
 const QUICK_LINKS = [
-  { title: 'Connect a server', description: 'add a linux vps to deploy to over ssh', href: '/servers', icon: Server },
-  { title: 'Add a git source', description: 'link github or gitlab apps', href: '/sources', icon: GitBranch },
-  { title: 'Configure storage', description: 'set up s3-compatible buckets for backups', href: '/storages', icon: Database },
-  { title: 'Add an ssh key', description: 'generate or paste a keypair for servers', href: '/keys-and-tokens', icon: KeyRound },
+  { title: 'Connect a server', description: 'Add a Linux VPS to deploy to over SSH', href: '/servers', icon: Server },
+  { title: 'Add a git source', description: 'Link GitHub or GitLab apps', href: '/sources', icon: GitBranch },
+  { title: 'Configure storage', description: 'Set up S3-compatible buckets for backups', href: '/storages', icon: Database },
+  { title: 'Add an ssh key', description: 'Generate or paste a keypair for servers', href: '/keys-and-tokens', icon: KeyRound },
 ];
 
 export default function DashboardPage() {
@@ -48,33 +48,43 @@ export default function DashboardPage() {
 
   return (
     <PageContainer>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <PageHeader
+        title="Overview"
+        description="Workspace at a glance"
+        actions={
+          <Button onClick={() => setAddServerOpen(true)}>
+            <Plus className="size-3.5" /> Add server
+          </Button>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Projects"
           value={projects?.length ?? '-'}
           icon={FolderKanban}
           href="/projects"
-          hint="groups of deployable services"
+          hint="Groups of deployable services"
         />
         <StatCard
           label="Services"
           value={totalServices ?? '-'}
           icon={Boxes}
-          hint="apps, databases & compose stacks"
+          hint="Apps, databases and compose stacks"
         />
         <StatCard
           label="Servers"
           value={servers?.length ?? '-'}
           icon={Server}
           href="/servers"
-          hint="deploy targets"
+          hint="Deploy targets"
         />
         <StatCard
-          label="SSH Keys"
+          label="SSH keys"
           value={keys?.length ?? '-'}
           icon={KeyRound}
           href="/keys-and-tokens"
-          hint="keys for server access"
+          hint="Keys for server access"
         />
       </div>
 
@@ -86,8 +96,8 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <Panel
-          title="servers"
-          contentClassName={servers?.length ? undefined : 'flex flex-col p-4'}
+          title="Servers"
+          padded={false}
           actions={
             <Button size="sm" onClick={() => setAddServerOpen(true)}>
               <Plus className="size-3.5" /> Add server
@@ -104,20 +114,13 @@ export default function DashboardPage() {
                     : { label: 'Needs setup', tone: 'warning' as const };
 
                 return (
-                  <Link
+                  <ListRow
                     key={s.id}
                     href={`/servers/${s.id}`}
-                    className="hover:bg-secondary flex items-center justify-between gap-4 px-4 py-3 transition-colors"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-[12.5px] font-semibold">{s.name}</div>
-                      <div className="text-muted-foreground truncate text-[11px]">{s.ip}</div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <StatusBadge status={status.label} tone={status.tone} />
-                      <ArrowRight className="text-faint size-3.5" />
-                    </div>
-                  </Link>
+                    title={s.name}
+                    subtitle={s.ip}
+                    trailing={<StatusBadge status={status.label} tone={status.tone} />}
+                  />
                 );
               })}
             </div>
@@ -125,30 +128,27 @@ export default function DashboardPage() {
             <EmptyState
               icon={Server}
               title="No servers yet"
-              description="add a linux host over ssh to start deploying."
-              className="flex flex-1 flex-col items-center justify-center py-8"
+              description="Add a Linux host over SSH to start deploying."
+              action={
+                <Button onClick={() => setAddServerOpen(true)}>
+                  <Plus className="size-3.5" /> Add server
+                </Button>
+              }
+              className="rounded-none border-0"
             />
           )}
         </Panel>
 
-        <Panel title="get started">
+        <Panel title="Get started" padded={false}>
           <div className="divide-y">
             {QUICK_LINKS.map((link) => (
-              <Link
+              <ListRow
                 key={link.href}
                 href={link.href}
-                className="hover:bg-secondary flex items-center gap-3 px-4 py-3 transition-colors"
-              >
-                <span className="border-border-bright bg-secondary text-phosphor grid size-9 shrink-0 place-items-center rounded-md border">
-                  <link.icon className="size-4" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[12.5px] font-semibold">{link.title}</span>
-                  <span className="text-muted-foreground block truncate text-[11px]">
-                    {link.description}
-                  </span>
-                </span>
-              </Link>
+                leading={<link.icon className="size-4" />}
+                title={link.title}
+                subtitle={link.description}
+              />
             ))}
           </div>
         </Panel>
