@@ -67,7 +67,7 @@ export function CommandPalette() {
       <CommandInput placeholder="Search or jump to…" />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Navigation">
+        <CommandGroup heading="Navigation" className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:text-xs">
           {COMMANDS.map((c) => (
             <CommandItem
               key={`${c.label}:${c.url}`}
