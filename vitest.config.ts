@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     setupFiles: ['./src/test/setup-dom.ts'],
+    include: ['src/**/*.test.{ts,tsx}', 'eslint-rules/**/*.test.mjs'],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
