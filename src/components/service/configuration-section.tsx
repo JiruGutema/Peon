@@ -162,8 +162,7 @@ export function ConfigurationSection({
 
   return (
     <div className="space-y-4">
-      <div id="general">
-      <FormSection title="General" footer={saveFooter}>
+      <FormSection id="general" title="General" footer={saveFooter}>
         <Field label="Name">
           <Input value={val('name', '')} onChange={(e) => set('name', e.target.value)} />
         </Field>
@@ -204,11 +203,9 @@ export function ConfigurationSection({
           </Field>
         )}
       </FormSection>
-      </div>
 
       {isGit && (
-        <div id="git-source">
-        <FormSection title="Git source" footer={saveFooter}>
+        <FormSection id="git-source" title="Git source" footer={saveFooter}>
           <Field label="Git source type">
             <SearchableSelect
               value={gitUiMode}
@@ -401,12 +398,10 @@ export function ConfigurationSection({
             </Field>
           )}
         </FormSection>
-        </div>
       )}
 
       {isGit && (
-        <div id="build">
-        <FormSection title="Build" footer={saveFooter}>
+        <FormSection id="build" title="Build" footer={saveFooter}>
           {!isDockerfilePack && (
             <>
               <Field
@@ -502,7 +497,6 @@ export function ConfigurationSection({
             onCheckedChange={(c) => set('disableBuildCache', c)}
           />
         </FormSection>
-        </div>
       )}
 
       {isDockerfilePack && (
@@ -573,124 +567,122 @@ export function ConfigurationSection({
       )}
 
       {svc.kind !== 'COMPOSE' && (
-      <div id="healthcheck">
-      <FormSection
-        title="Healthcheck"
-        description={
-          isDb
-            ? 'Docker probe timing for the database container (the probe command is engine-specific).'
-            : "Define how your container's health should be checked (Docker HEALTHCHECK on the running container)."
-        }
-        footer={saveFooter}
-      >
-            <ToggleField
-              label="Enabled"
-              tooltip={
-                isDb
-                  ? 'Run Docker HEALTHCHECK probes on the database container using engine-specific commands and the timing fields below.'
-                  : 'Add a Docker HEALTHCHECK to the running container using the method, path, and timing options below. Failed probes mark the container unhealthy.'
-              }
-              checked={val('healthCheckEnabled', false)}
-              onCheckedChange={(c) => set('healthCheckEnabled', c)}
-            />
-        {hasHttpSurface && (
-        <>
-          <Field label="Method">
-            <SearchableSelect
-              value={val('healthCheckMethod', 'GET')}
-              onValueChange={(v) => set('healthCheckMethod', v)}
-              placeholder="Select method"
-              options={['GET', 'HEAD', 'POST', 'OPTIONS'].map((m) => ({ value: m, label: m }))}
-            />
-          </Field>
-          <Field label="Scheme">
-            <SearchableSelect
-              value={val('healthCheckScheme', 'http')}
-              onValueChange={(v) => set('healthCheckScheme', v)}
-              placeholder="Select scheme"
-              options={[
-                { value: 'http', label: 'http' },
-                { value: 'https', label: 'https' },
-              ]}
-            />
-          </Field>
-          <Field label="Host">
-            <Input
-              placeholder="localhost"
-              value={val('healthCheckHost', 'localhost')}
-              onChange={(e) => set('healthCheckHost', e.target.value || 'localhost')}
-            />
-          </Field>
-          <Field label="Port">
-            <Input
-              placeholder="Defaults to first exposed port"
-              value={val('healthCheckPort', '') ?? ''}
-              onChange={(e) => set('healthCheckPort', e.target.value || null)}
-            />
-          </Field>
-          <Field label="Path">
-            <Input
-              placeholder="/"
-              value={val('healthCheckPath', '') ?? ''}
-              onChange={(e) => set('healthCheckPath', e.target.value || null)}
-            />
-          </Field>
-        </>
-        )}
-        {hasHttpSurface && (
-        <>
-          <Field label="Return code">
-            <Input
-              type="number"
-              value={String(val('healthCheckReturnCode', 200))}
-              onChange={(e) => set('healthCheckReturnCode', Number(e.target.value) || 200)}
-            />
-          </Field>
-          <Field label="Response text (optional, body must contain)">
-            <Input
-              placeholder="OK"
-              value={val('healthCheckResponseText', '') ?? ''}
-              onChange={(e) => set('healthCheckResponseText', e.target.value || null)}
-            />
-          </Field>
-        </>
-        )}
-        <>
-          <Field label="Interval (s)">
-            <Input
-              type="number"
-              value={String(val('healthCheckInterval', 5))}
-              onChange={(e) => set('healthCheckInterval', Number(e.target.value) || 5)}
-            />
-          </Field>
-          <Field label="Timeout (s)">
-            <Input
-              type="number"
-              value={String(val('healthCheckTimeout', 5))}
-              onChange={(e) => set('healthCheckTimeout', Number(e.target.value) || 5)}
-            />
-          </Field>
-          <Field label="Retries">
-            <Input
-              type="number"
-              value={String(val('healthCheckRetries', 10))}
-              onChange={(e) => set('healthCheckRetries', Number(e.target.value) || 10)}
-            />
-          </Field>
-          <Field label="Start period (s)">
-            <Input
-              type="number"
-              value={String(val('healthCheckStartPeriod', 5))}
-              onChange={(e) => set('healthCheckStartPeriod', Number(e.target.value) || 5)}
-            />
-          </Field>
-        </>
-      </FormSection>
-      </div>
+        <FormSection
+          id="healthcheck"
+          title="Healthcheck"
+          description={
+            isDb
+              ? 'Docker probe timing for the database container (the probe command is engine-specific).'
+              : "Define how your container's health should be checked (Docker HEALTHCHECK on the running container)."
+          }
+          footer={saveFooter}
+        >
+          <ToggleField
+            label="Enabled"
+            tooltip={
+              isDb
+                ? 'Run Docker HEALTHCHECK probes on the database container using engine-specific commands and the timing fields below.'
+                : 'Add a Docker HEALTHCHECK to the running container using the method, path, and timing options below. Failed probes mark the container unhealthy.'
+            }
+            checked={val('healthCheckEnabled', false)}
+            onCheckedChange={(c) => set('healthCheckEnabled', c)}
+          />
+          {hasHttpSurface && (
+          <>
+            <Field label="Method">
+              <SearchableSelect
+                value={val('healthCheckMethod', 'GET')}
+                onValueChange={(v) => set('healthCheckMethod', v)}
+                placeholder="Select method"
+                options={['GET', 'HEAD', 'POST', 'OPTIONS'].map((m) => ({ value: m, label: m }))}
+              />
+            </Field>
+            <Field label="Scheme">
+              <SearchableSelect
+                value={val('healthCheckScheme', 'http')}
+                onValueChange={(v) => set('healthCheckScheme', v)}
+                placeholder="Select scheme"
+                options={[
+                  { value: 'http', label: 'http' },
+                  { value: 'https', label: 'https' },
+                ]}
+              />
+            </Field>
+            <Field label="Host">
+              <Input
+                placeholder="localhost"
+                value={val('healthCheckHost', 'localhost')}
+                onChange={(e) => set('healthCheckHost', e.target.value || 'localhost')}
+              />
+            </Field>
+            <Field label="Port">
+              <Input
+                placeholder="Defaults to first exposed port"
+                value={val('healthCheckPort', '') ?? ''}
+                onChange={(e) => set('healthCheckPort', e.target.value || null)}
+              />
+            </Field>
+            <Field label="Path">
+              <Input
+                placeholder="/"
+                value={val('healthCheckPath', '') ?? ''}
+                onChange={(e) => set('healthCheckPath', e.target.value || null)}
+              />
+            </Field>
+          </>
+          )}
+          {hasHttpSurface && (
+          <>
+            <Field label="Return code">
+              <Input
+                type="number"
+                value={String(val('healthCheckReturnCode', 200))}
+                onChange={(e) => set('healthCheckReturnCode', Number(e.target.value) || 200)}
+              />
+            </Field>
+            <Field label="Response text (optional, body must contain)">
+              <Input
+                placeholder="OK"
+                value={val('healthCheckResponseText', '') ?? ''}
+                onChange={(e) => set('healthCheckResponseText', e.target.value || null)}
+              />
+            </Field>
+          </>
+          )}
+          <>
+            <Field label="Interval (s)">
+              <Input
+                type="number"
+                value={String(val('healthCheckInterval', 5))}
+                onChange={(e) => set('healthCheckInterval', Number(e.target.value) || 5)}
+              />
+            </Field>
+            <Field label="Timeout (s)">
+              <Input
+                type="number"
+                value={String(val('healthCheckTimeout', 5))}
+                onChange={(e) => set('healthCheckTimeout', Number(e.target.value) || 5)}
+              />
+            </Field>
+            <Field label="Retries">
+              <Input
+                type="number"
+                value={String(val('healthCheckRetries', 10))}
+                onChange={(e) => set('healthCheckRetries', Number(e.target.value) || 10)}
+              />
+            </Field>
+            <Field label="Start period (s)">
+              <Input
+                type="number"
+                value={String(val('healthCheckStartPeriod', 5))}
+                onChange={(e) => set('healthCheckStartPeriod', Number(e.target.value) || 5)}
+              />
+            </Field>
+          </>
+        </FormSection>
       )}
 
-      <div id="advanced">
-      <FormSection title="Advanced" footer={saveFooter}>
+      <FormSection id="advanced" title="Advanced" footer={saveFooter}>
         {isGit && (
           <PreviewDnsGuide
             serverIp={svc.server?.ip}
@@ -794,10 +786,8 @@ export function ConfigurationSection({
         </Field>
         )}
       </FormSection>
-      </div>
 
-      <div id="resource-limits">
-      <FormSection title="Resource limits" footer={saveFooter}>
+      <FormSection id="resource-limits" title="Resource limits" footer={saveFooter}>
         <Field
           label="CPU limit"
           tooltip="Docker CPU limit for the container (e.g. 0.5 = half a core). Leave empty for no limit. Applied on deploy via compose."
@@ -839,7 +829,6 @@ export function ConfigurationSection({
           />
         </Field>
       </FormSection>
-      </div>
     </div>
   );
 }

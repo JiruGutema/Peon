@@ -116,6 +116,13 @@ export function GeneralSection({
   const proxySwitchBlocked =
     proxyTypeChanged && server.proxyStatus === "running"
 
+  // Thresholds match the pre-redesign MetricCard: used % >= 90 red, >= 75 amber;
+  // free % < 15 red, < 30 amber. No tone while the metric is unknown.
+  type MetricTone = "default" | "warning" | "destructive"
+  const usedTone = (pct: number | null | undefined): MetricTone =>
+    pct == null ? "default" : pct >= 90 ? "destructive" : pct >= 75 ? "warning" : "default"
+  const freeTone = (pct: number | null | undefined): MetricTone =>
+    pct == null ? "default" : pct < 15 ? "destructive" : pct < 30 ? "warning" : "default"
 
   return (
     <div className="space-y-6">
@@ -123,18 +130,21 @@ export function GeneralSection({
         <StatCard
           label="CPU"
           icon={Cpu}
+          tone={usedTone(cpu)}
           value={cpu != null ? `${Math.round(cpu)}%` : "—"}
           hint={agentLive ? "From peon-ping-pong" : "Waiting for agent"}
         />
         <StatCard
           label="RAM"
           icon={MemoryStick}
+          tone={usedTone(mem)}
           value={mem != null ? `${Math.round(mem)}%` : "—"}
           hint={agentLive ? "From peon-ping-pong" : "Waiting for agent"}
         />
         <StatCard
           label="Disk used"
           icon={HardDrive}
+          tone={usedTone(disk)}
           value={disk != null ? `${Math.round(disk)}%` : "—"}
           hint={
             agentLive
@@ -147,6 +157,7 @@ export function GeneralSection({
         <StatCard
           label="Free space"
           icon={HardDrive}
+          tone={freeTone(free)}
           value={free != null ? `${Math.round(free)}%` : "—"}
           hint={agentLive ? "Root filesystem" : "Waiting for agent"}
         />

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CalendarClock, Trash2, Play } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -206,7 +207,12 @@ function TaskEditor({ serviceId, task }: { serviceId: string; task: ScheduledTas
 
 function TaskExecutions({ serviceId, task }: { serviceId: string; task: ScheduledTaskItem }) {
   const [open, setOpen] = useState(false);
-  const { data: executions } = useQuery({
+  const {
+    data: executions,
+    isPending: executionsPending,
+    isError: executionsIsError,
+    error: executionsError,
+  } = useQuery({
     queryKey: ['task-executions', task.id],
     queryFn: () => listTaskExecutions(serviceId, task.id),
     enabled: open,
@@ -218,46 +224,51 @@ function TaskExecutions({ serviceId, task }: { serviceId: string; task: Schedule
     <div className="text-sm">
       <button onClick={() => setOpen(!open)} className="text-muted-foreground hover:text-foreground transition-colors">
         {task._count.executions} execution{task._count.executions === 1 ? '' : 's'}
-        {last ? ` · last: ${statusLabel(last.status).toLowerCase()} ${formatLocalDateTime(last.startedAt)}` : ''}
+        {last ? ` · last: ${statusLabel(last.status)} ${formatLocalDateTime(last.startedAt)}` : ''}
         {open ? ' ▲' : ' ▼'}
       </button>
-      {open && (
-        <DataTable
-          className="mt-2"
-          rows={executions ?? []}
-          rowKey={(e) => e.id}
-          isLoading={!executions}
-          emptyState={<p className="text-muted-foreground mt-2">No executions yet.</p>}
-          columns={[
-            { key: 'status', header: 'Status', cell: (e) => <StatusBadge status={e.status} /> },
-            {
-              key: 'started',
-              header: 'Started',
-              className: 'whitespace-nowrap',
-              cell: (e) => (
-                <span className="text-muted-foreground tabular-nums">
-                  <LocalDateTime value={e.startedAt} />
-                </span>
-              ),
-            },
-            {
-              key: 'duration',
-              header: 'Duration',
-              cell: (e) => (
-                <span className="text-muted-foreground tabular-nums">
-                  {e.duration != null ? `${(e.duration / 1000).toFixed(1)}s` : '—'}
-                </span>
-              ),
-            },
-            {
-              key: 'output',
-              header: 'Output',
-              className: 'w-full max-w-0 whitespace-normal',
-              cell: (e) => <RunOutput message={e.message} />,
-            },
-          ]}
-        />
-      )}
+      {open &&
+        (executionsIsError ? (
+          <Alert variant="destructive" className="mt-2">
+            <AlertDescription>{executionsError instanceof Error ? executionsError.message : 'Failed to load executions'}</AlertDescription>
+          </Alert>
+        ) : (
+          <DataTable
+            className="mt-2"
+            rows={executions ?? []}
+            rowKey={(e) => e.id}
+            isLoading={executionsPending}
+            emptyState={<p className="text-muted-foreground mt-2">No executions yet.</p>}
+            columns={[
+              { key: 'status', header: 'Status', cell: (e) => <StatusBadge status={e.status} /> },
+              {
+                key: 'started',
+                header: 'Started',
+                className: 'whitespace-nowrap',
+                cell: (e) => (
+                  <span className="text-muted-foreground tabular-nums">
+                    <LocalDateTime value={e.startedAt} />
+                  </span>
+                ),
+              },
+              {
+                key: 'duration',
+                header: 'Duration',
+                cell: (e) => (
+                  <span className="text-muted-foreground tabular-nums">
+                    {e.duration != null ? `${(e.duration / 1000).toFixed(1)}s` : '—'}
+                  </span>
+                ),
+              },
+              {
+                key: 'output',
+                header: 'Output',
+                className: 'w-full max-w-0 whitespace-normal',
+                cell: (e) => <RunOutput message={e.message} />,
+              },
+            ]}
+          />
+        ))}
     </div>
   );
 }

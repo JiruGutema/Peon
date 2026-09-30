@@ -41,6 +41,7 @@ export default function WorkspaceSettingsLayout({ children }: { children: React.
             <Link
               key={t.value}
               href={t.href}
+              aria-current={active === t.value ? 'page' : undefined}
               className={cn(
                 'rounded-md px-3 py-1.5 text-base whitespace-nowrap transition-colors',
                 active === t.value ? 'bg-secondary font-medium text-foreground' : 'text-muted-foreground hover:bg-secondary hover:text-foreground',

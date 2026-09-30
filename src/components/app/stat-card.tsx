@@ -9,6 +9,7 @@ export function StatCard({
   hint,
   icon: Icon,
   href,
+  tone = 'default',
   className,
 }: {
   label: string;
@@ -16,15 +17,17 @@ export function StatCard({
   hint?: React.ReactNode;
   icon?: LucideIcon;
   href?: string;
+  tone?: 'default' | 'warning' | 'destructive';
   className?: string;
 }) {
+  const toneClass = tone === 'destructive' ? 'text-destructive' : tone === 'warning' ? 'text-warning' : undefined;
   const inner = (
     <div className={cn('bg-card border-border rounded-lg border p-4 transition-colors', href && 'hover:bg-secondary', className)}>
       <div className="text-muted-foreground flex items-center justify-between text-sm font-medium">
         <span>{label}</span>
-        {Icon ? <Icon className="size-4" /> : null}
+        {Icon ? <Icon className={cn('size-4', toneClass)} /> : null}
       </div>
-      <div className="text-display mt-2 font-mono font-semibold tracking-tight">{value}</div>
+      <div className={cn('text-display mt-2 font-mono font-semibold tracking-tight', toneClass)}>{value}</div>
       {hint ? <p className="text-muted-foreground mt-1 text-sm">{hint}</p> : null}
     </div>
   );

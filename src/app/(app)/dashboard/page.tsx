@@ -19,7 +19,7 @@ const QUICK_LINKS = [
   { title: 'Connect a server', description: 'Add a Linux VPS to deploy to over SSH', href: '/servers', icon: Server },
   { title: 'Add a git source', description: 'Link GitHub or GitLab apps', href: '/sources', icon: GitBranch },
   { title: 'Configure storage', description: 'Set up S3-compatible buckets for backups', href: '/storages', icon: Database },
-  { title: 'Add an ssh key', description: 'Generate or paste a keypair for servers', href: '/keys-and-tokens', icon: KeyRound },
+  { title: 'Add an SSH key', description: 'Generate or paste a keypair for servers', href: '/keys-and-tokens', icon: KeyRound },
 ];
 
 export default function DashboardPage() {

@@ -299,9 +299,12 @@ export function OverviewSection({
                 header: 'Commit',
                 cell: (d) => (
                   <span className="flex min-w-0 items-center gap-2">
-                    <span className="font-mono">
+                    <span className="shrink-0 font-mono">
                       {d.commitSha ? d.commitSha.slice(0, 7) : d.uuid.slice(0, 7)}
                     </span>
+                    {d.commitMessage ? (
+                      <span className="text-muted-foreground max-w-[280px] truncate">{d.commitMessage}</span>
+                    ) : null}
                     {d.isPreview && (
                       <Badge variant="outline" className="shrink-0">
                         Preview{d.pullRequestId != null ? ` #${d.pullRequestId}` : ''}

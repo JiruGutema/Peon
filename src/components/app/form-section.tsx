@@ -5,6 +5,7 @@ import { Panel } from './panel';
 import { cn } from '@/lib/utils';
 
 export function FormSection({
+  id,
   title,
   description,
   onSubmit,
@@ -12,6 +13,7 @@ export function FormSection({
   children,
   className,
 }: {
+  id?: string;
   title: React.ReactNode;
   description?: React.ReactNode;
   onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -20,7 +22,7 @@ export function FormSection({
   className?: string;
 }) {
   const body = (
-    <Panel title={title} description={description} footer={footer} className={className} contentClassName="space-y-6">
+    <Panel id={id} title={title} description={description} footer={footer} className={className} contentClassName="space-y-6">
       {children}
     </Panel>
   );

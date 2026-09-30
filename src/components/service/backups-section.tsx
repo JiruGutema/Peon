@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { DatabaseBackup, Trash2, Play, Download } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -264,7 +265,9 @@ function formatBackupSize(size: string | null): string | null {
 function BackupExecutions({ serviceId, backup }: { serviceId: string; backup: ScheduledBackupItem }) {
   const {
     data,
-    isLoading,
+    isPending: executionsPending,
+    isError: executionsIsError,
+    error: executionsError,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
@@ -297,92 +300,98 @@ function BackupExecutions({ serviceId, backup }: { serviceId: string; backup: Sc
   return (
     <div className="space-y-2">
       <div className="text-base font-medium">Previous backups ({backup._count.executions})</div>
-      <DataTable
-        rows={items}
-        rowKey={(e) => e.id}
-        isLoading={isLoading && items.length === 0}
-        emptyState={
-          <p className="text-muted-foreground text-sm">
-            No previous backups yet. Run “Backup now” to create one.
-          </p>
-        }
-        columns={[
-          {
-            key: 'status',
-            header: 'Status',
-            cell: (e) => <StatusBadge status={e.status} />,
-          },
-          {
-            key: 'details',
-            header: 'Details',
-            className: 'w-full max-w-0 whitespace-normal',
-            cell: (e) => (
-              <div className="min-w-0 space-y-1">
-                <div className="text-muted-foreground">
-                  {[
-                    e.dumpAll ? 'All databases' : e.databaseName,
-                    e.s3Uploaded ? 'S3' : null,
-                    formatBackupSize(e.size),
-                  ]
-                    .filter(Boolean)
-                    .join(' · ') || '—'}
+      {executionsIsError ? (
+        <Alert variant="destructive">
+          <AlertDescription>{executionsError instanceof Error ? executionsError.message : 'Failed to load previous backups'}</AlertDescription>
+        </Alert>
+      ) : (
+        <DataTable
+          rows={items}
+          rowKey={(e) => e.id}
+          isLoading={executionsPending}
+          emptyState={
+            <p className="text-muted-foreground text-sm">
+              No previous backups yet. Run “Backup now” to create one.
+            </p>
+          }
+          columns={[
+            {
+              key: 'status',
+              header: 'Status',
+              cell: (e) => <StatusBadge status={e.status} />,
+            },
+            {
+              key: 'details',
+              header: 'Details',
+              className: 'w-full max-w-0 whitespace-normal',
+              cell: (e) => (
+                <div className="min-w-0 space-y-1">
+                  <div className="text-muted-foreground">
+                    {[
+                      e.dumpAll ? 'All databases' : e.databaseName,
+                      e.s3Uploaded ? 'S3' : null,
+                      formatBackupSize(e.size),
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') || '—'}
+                  </div>
+                  {e.filename && (
+                    <div className="text-muted-foreground truncate font-mono text-sm">{e.filename}</div>
+                  )}
+                  {e.message && (
+                    <pre className="text-muted-foreground max-h-32 overflow-auto font-mono text-sm whitespace-pre-wrap">
+                      {e.message}
+                    </pre>
+                  )}
                 </div>
-                {e.filename && (
-                  <div className="text-muted-foreground truncate font-mono text-sm">{e.filename}</div>
-                )}
-                {e.message && (
-                  <pre className="text-muted-foreground max-h-32 overflow-auto font-mono text-sm whitespace-pre-wrap">
-                    {e.message}
-                  </pre>
-                )}
-              </div>
-            ),
-          },
-          {
-            key: 'started',
-            header: 'Started',
-            cell: (e) => (
-              <span className="text-muted-foreground">
-                <LocalDateTime value={e.startedAt} />
-              </span>
-            ),
-          },
-          {
-            key: 'actions',
-            header: <span className="sr-only">Actions</span>,
-            align: 'right',
-            cell: (e) =>
-              e.filename && e.status === 'SUCCESS' ? (
-                <span className="inline-flex items-center justify-end gap-1.5">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={downloadMut.isPending}
-                    onClick={() => downloadMut.mutate(e.filename!)}
-                  >
-                    <Download className="size-3.5" /> Download
-                  </Button>
-                  <ConfirmButton
-                    onConfirm={() => restoreMut.mutate(e.filename!)}
-                    title="Queue restore of this backup?"
-                    description={
-                      e.dumpAll
-                        ? 'The restore will be queued and applied by the worker. All databases in this instance may be overwritten. This cannot be undone.'
-                        : 'The restore will be queued and applied by the worker. Existing data in the database may be overwritten. This cannot be undone.'
-                    }
-                    confirmLabel="Queue restore"
-                    variant="outline"
-                    confirmVariant="default"
-                    size="sm"
-                    disabled={restoreMut.isPending}
-                  >
-                    Restore
-                  </ConfirmButton>
+              ),
+            },
+            {
+              key: 'started',
+              header: 'Started',
+              cell: (e) => (
+                <span className="text-muted-foreground">
+                  <LocalDateTime value={e.startedAt} />
                 </span>
-              ) : null,
-          },
-        ]}
-      />
+              ),
+            },
+            {
+              key: 'actions',
+              header: <span className="sr-only">Actions</span>,
+              align: 'right',
+              cell: (e) =>
+                e.filename && e.status === 'SUCCESS' ? (
+                  <span className="inline-flex items-center justify-end gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={downloadMut.isPending}
+                      onClick={() => downloadMut.mutate(e.filename!)}
+                    >
+                      <Download className="size-3.5" /> Download
+                    </Button>
+                    <ConfirmButton
+                      onConfirm={() => restoreMut.mutate(e.filename!)}
+                      title="Queue restore of this backup?"
+                      description={
+                        e.dumpAll
+                          ? 'The restore will be queued and applied by the worker. All databases in this instance may be overwritten. This cannot be undone.'
+                          : 'The restore will be queued and applied by the worker. Existing data in the database may be overwritten. This cannot be undone.'
+                      }
+                      confirmLabel="Queue restore"
+                      variant="outline"
+                      confirmVariant="default"
+                      size="sm"
+                      disabled={restoreMut.isPending}
+                    >
+                      Restore
+                    </ConfirmButton>
+                  </span>
+                ) : null,
+            },
+          ]}
+        />
+      )}
       {hasNextPage ? (
         <Button
           size="sm"

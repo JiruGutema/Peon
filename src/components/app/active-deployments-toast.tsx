@@ -61,7 +61,7 @@ export function ActiveDeploymentsToast() {
   return (
     <div
       className={cn(
-        'pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border bg-card shadow-lg',
+        'pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg border bg-card shadow-popover dark:shadow-none',
         'animate-in slide-in-from-bottom-4 fade-in duration-200',
       )}
       role="status"

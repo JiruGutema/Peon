@@ -228,12 +228,12 @@ export function NewServiceDialog({
     <Modal open={open} onOpenChange={setOpen}>
       <ModalTrigger asChild>
         <Button>
-          <Boxes className="size-4" /> New Service
+          <Boxes className="size-4" /> New service
         </Button>
       </ModalTrigger>
       <ModalContent size="xl">
         <ModalHeader>
-          <ModalTitle>New Service</ModalTitle>
+          <ModalTitle>New service</ModalTitle>
           <ModalDescription>Create a deployable unit in this project.</ModalDescription>
         </ModalHeader>
         <ModalBody>
@@ -362,7 +362,7 @@ export function NewServiceDialog({
                     }}
                     placeholder="Select source type"
                     options={[
-                      { value: 'git_app', label: 'Git App' },
+                      { value: 'git_app', label: 'Git app' },
                       { value: 'public', label: 'Public repository' },
                       { value: 'deploy_key', label: 'Deploy key' },
                     ]}

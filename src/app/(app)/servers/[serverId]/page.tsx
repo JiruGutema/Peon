@@ -1,14 +1,13 @@
 'use client';
 
 import { use, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { SquareTerminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageContainer, PageHeader } from '@/components/app/page';
 import { StatusBadge } from '@/components/app/status-badge';
-import { getServer, validateServer } from '@/services/api/server';
+import { getServer } from '@/services/api/server';
 import { TabWithActivity } from '@/components/server/activity-panel';
 import { GeneralSection } from '@/components/server/general-section';
 import { AdvancedSection } from '@/components/server/advanced-section';
@@ -29,16 +28,6 @@ export default function ServerDetailPage({ params }: { params: Promise<{ serverI
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['server', serverId] });
-
-  // Header "Validate": re-runs the connection check with the saved host settings.
-  const validateMut = useMutation({
-    mutationFn: () => validateServer(serverId),
-    onSuccess: () => {
-      invalidate();
-      toast.success('Connection check started. Watch activity for live logs.');
-    },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Failed'),
-  });
 
   if (isLoading || !server) {
     return (
@@ -66,18 +55,9 @@ export default function ServerDetailPage({ params }: { params: Promise<{ serverI
           </span>
         }
         actions={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => validateMut.mutate()}
-              disabled={validateMut.isPending || !server.privateKeyId}
-            >
-              {validateMut.isPending ? 'Validating…' : 'Validate'}
-            </Button>
-            <Button variant="outline" onClick={() => setTab('terminal')}>
-              <SquareTerminal className="size-4" /> Terminal
-            </Button>
-          </>
+          <Button variant="outline" onClick={() => setTab('terminal')}>
+            <SquareTerminal className="size-4" /> Terminal
+          </Button>
         }
       />
       <Tabs value={tab} onValueChange={setTab} className="w-full min-w-0">

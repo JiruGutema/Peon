@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { StatusBadge, statusTone } from '../status-badge';
 import { StatCard } from '../stat-card';
 import { DataTable } from '../data-table';
@@ -15,6 +15,7 @@ describe('StatusBadge', () => {
     expect(statusTone('STOPPED')).toBe('muted');
     expect(statusTone('DISCONNECTED')).toBe('destructive');
     expect(statusTone('UNREACHABLE')).toBe('destructive');
+    expect(statusTone('EXITED')).toBe('destructive');
   });
   it('renders unknown statuses as a muted sentence-case label instead of crashing', () => {
     render(<StatusBadge status="PROVISIONING_DISK" />);
@@ -33,6 +34,10 @@ describe('StatCard', () => {
     const v = screen.getByText('3');
     expect(v.className).toContain('font-mono');
     expect(v.className).toContain('text-display');
+  });
+  it('colours the value with the destructive tone', () => {
+    render(<StatCard label="Disk" value="95%" tone="destructive" />);
+    expect(screen.getByText('95%').className).toContain('text-destructive');
   });
 });
 
@@ -54,6 +59,27 @@ describe('DataTable', () => {
   it('links rows when rowHref is given', () => {
     render(<DataTable columns={columns} rows={[{ id: '1', name: 'web' }]} rowKey={(r) => r.id} rowHref={(r) => `/s/${r.id}`} />);
     expect(screen.getByRole('link', { name: 'web' })).toHaveAttribute('href', '/s/1');
+  });
+  it('stretches the row link over the whole row and lifts other cells above it', () => {
+    const twoCols = [
+      ...columns,
+      { key: 'actions', header: 'Actions', cell: () => <button type="button">Delete</button> },
+    ];
+    render(<DataTable columns={twoCols} rows={[{ id: '1', name: 'web' }]} rowKey={(r) => r.id} rowHref={(r) => `/s/${r.id}`} />);
+    const link = screen.getByRole('link', { name: 'web' });
+    expect(link.className.split(/\s+/)).not.toContain('relative');
+    expect(link.className).toContain('after:inset-0');
+    expect(screen.getByRole('button', { name: 'Delete' }).parentElement?.className).toContain('z-10');
+  });
+  it('makes onRowClick rows keyboard-activatable', () => {
+    const onRowClick = vi.fn();
+    render(<DataTable columns={columns} rows={[{ id: '1', name: 'web' }]} rowKey={(r) => r.id} onRowClick={onRowClick} />);
+    const row = screen.getByRole('button', { name: 'web' });
+    expect(row).toHaveAttribute('tabIndex', '0');
+    fireEvent.keyDown(row, { key: 'Enter' });
+    expect(onRowClick).toHaveBeenCalledWith({ id: '1', name: 'web' });
+    fireEvent.keyDown(row, { key: ' ' });
+    expect(onRowClick).toHaveBeenCalledTimes(2);
   });
 });
 

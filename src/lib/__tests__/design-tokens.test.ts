@@ -58,6 +58,11 @@ describe('design tokens', () => {
     expect(contrast(hex(':root', 'muted-foreground'), hex(':root', 'card'))).toBeGreaterThanOrEqual(4.5);
     expect(contrast(hex('.dark', 'muted-foreground'), hex('.dark', 'background'))).toBeGreaterThanOrEqual(4.5);
     expect(contrast(hex('.dark', 'muted-foreground'), hex('.dark', 'card'))).toBeGreaterThanOrEqual(4.5);
+    for (const theme of [':root', '.dark']) {
+      for (const name of ['success', 'warning', 'destructive', 'info']) {
+        expect(contrast(hex(theme, name), hex(theme, 'card')), `${name} on card in ${theme}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 
   it('uses Geist fonts', () => {

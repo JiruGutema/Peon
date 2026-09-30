@@ -62,14 +62,31 @@ export function DataTable<T>({
                   <TableRow
                     key={rowKey(row)}
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
-                    className={cn((href || onRowClick) && 'cursor-pointer')}
+                    tabIndex={onRowClick ? 0 : undefined}
+                    role={onRowClick ? 'button' : undefined}
+                    onKeyDown={
+                      onRowClick
+                        ? (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              if (e.key === ' ') e.preventDefault();
+                              onRowClick(row);
+                            }
+                          }
+                        : undefined
+                    }
+                    className={cn(
+                      (href || onRowClick) && 'cursor-pointer',
+                      onRowClick && 'focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset',
+                    )}
                   >
                     {columns.map((c, i) => (
                       <TableCell key={c.key} className={cn(c.align === 'right' && 'text-right', c.className)}>
                         {href && i === 0 ? (
-                          <Link href={href} className="after:absolute after:inset-0 relative font-medium">
+                          <Link href={href} className="cursor-pointer font-medium after:absolute after:inset-0">
                             {c.cell(row)}
                           </Link>
+                        ) : href ? (
+                          <span className="relative z-10">{c.cell(row)}</span>
                         ) : (
                           c.cell(row)
                         )}
