@@ -7,7 +7,7 @@ import { PageContainer, PageHeader } from '@/components/app/page';
 import { currentWorkspace } from '@/store/auth';
 import { cn } from '@/lib/utils';
 
-export const SETTINGS_NAV = [
+const SETTINGS_NAV = [
   { value: 'general', href: '/settings/general', label: 'General', ownerOnly: false },
   { value: 'members', href: '/settings/members', label: 'Members', ownerOnly: false },
   { value: 'subscription', href: '/settings/subscription', label: 'Subscription', ownerOnly: false },
