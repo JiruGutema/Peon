@@ -1,17 +1,16 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Trash2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Callout, CalloutBullets } from '@/components/app/callout';
 import { updateService, type ServiceDetail } from '@/services/api/service';
-import { Panel } from '@/components/app/page';
+import { FormSection } from '@/components/app/page';
 import { ConfirmButton } from '@/components/app/confirm';
-import { ToggleField } from './fields';
+import { Field, ToggleField } from './fields';
 
 /**
  * Multi-domain editor with add/remove rows. Persists as comma-separated fqdn.
@@ -53,7 +52,6 @@ function DomainsField({
 
   return (
     <div className="space-y-2">
-      <Label>Domains</Label>
       <div className="space-y-2">
         {domains.map((domain, i) => (
           <div key={i} className="flex gap-2">
@@ -91,7 +89,7 @@ function DomainsField({
         size="sm"
         onClick={() => commit([...domains, ''])}
       >
-        Add New Domain
+        Add domain
       </Button>
     </div>
   );
@@ -113,19 +111,17 @@ function DnsRecordField({
 }) {
   if (emphasis) {
     return (
-      <div className="border-phosphor-dim bg-phosphor/5 hover:bg-phosphor/10 min-w-0 space-y-1.5 rounded-md border px-3 py-3 transition-colors">
-        <div className="text-phosphor/80 font-mono text-[10px] font-semibold tracking-wide uppercase">
-          {label}
-        </div>
+      <div className="border-primary/30 bg-primary/5 hover:bg-primary/10 min-w-0 space-y-1.5 rounded-md border px-3 py-3 transition-colors">
+        <div className="text-primary text-xs font-medium">{label}</div>
         <div className="flex min-w-0 items-center justify-between gap-2">
-          <span className="text-foreground min-w-0 break-all font-mono text-[14.5px] font-semibold leading-snug">
+          <span className="text-foreground text-md min-w-0 font-mono font-medium leading-snug break-all">
             {value}
           </span>
           {onCopy && copyEnabled ? (
             <button
               type="button"
               onClick={onCopy}
-              className="text-phosphor bg-phosphor/10 hover:bg-phosphor/20 flex shrink-0 items-center gap-1.5 rounded px-2 py-1 text-[11px] font-medium transition-colors"
+              className="text-primary bg-primary/10 hover:bg-primary/20 flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors"
               title={`Copy ${label}`}
             >
               <Copy className="size-3.5" />
@@ -139,16 +135,16 @@ function DnsRecordField({
 
   return (
     <div className="bg-secondary/40 min-w-0 space-y-1 rounded-md border px-3 py-2.5">
-      <div className="text-muted-foreground font-mono text-[10px] tracking-wide uppercase">{label}</div>
+      <div className="text-muted-foreground text-xs">{label}</div>
       <div className="flex min-w-0 items-start justify-between gap-2">
-        <span className="text-foreground min-w-0 break-all font-mono text-[12.5px] leading-relaxed">
+        <span className="text-foreground min-w-0 font-mono text-base leading-relaxed break-all">
           {value}
         </span>
         {onCopy && copyEnabled ? (
           <button
             type="button"
             onClick={onCopy}
-            className="text-muted-foreground hover:text-phosphor shrink-0 transition-colors"
+            className="text-muted-foreground hover:text-primary shrink-0 transition-colors"
             title={`Copy ${label}`}
           >
             <Copy className="size-3.5" />
@@ -176,8 +172,8 @@ function DnsGuide({ serverIp, domain }: { serverIp?: string | null; domain?: str
     <div className="space-y-3">
       <div className="border-border bg-card space-y-3 rounded-lg border p-3">
         <div className="space-y-0.5">
-          <div className="text-[12.5px] font-semibold">DNS record</div>
-          <p className="text-muted-foreground text-[11.5px] leading-relaxed">
+          <div className="text-base font-medium">DNS record</div>
+          <p className="text-muted-foreground text-sm leading-relaxed">
             Create this record at your DNS provider for{' '}
             <span className="text-foreground break-all font-mono">{host}</span>
           </p>
@@ -200,7 +196,7 @@ function DnsGuide({ serverIp, domain }: { serverIp?: string | null; domain?: str
         </div>
       </div>
 
-      <Callout title="Need help pointing your domain?">
+      <Callout tone="info" title="Need help pointing your domain?">
         <CalloutBullets>
           <li>
             The value must be the public IP of the server this service is deployed to
@@ -225,7 +221,7 @@ function DnsGuide({ serverIp, domain }: { serverIp?: string | null; domain?: str
           <button
             type="button"
             onClick={() => copy(`dig +short ${host}`)}
-            className="bg-secondary hover:text-phosphor inline-flex max-w-full items-center gap-1.5 rounded px-2 py-1 font-mono text-[11.5px] transition-colors"
+            className="bg-secondary hover:text-primary inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-1 font-mono text-sm transition-colors"
             title="Copy command"
           >
             <span className="min-w-0 break-all">dig +short {host}</span>
@@ -260,7 +256,7 @@ export function PreviewDnsGuide({
   };
 
   return (
-    <Callout title="DNS setup for preview deployments (server wildcard)">
+    <Callout tone="info" title="DNS setup for preview deployments (server wildcard)">
       <p>
         Previews use your <b>server wildcard domain</b>: each PR commit gets{' '}
         <span className="text-foreground font-mono">{exampleFqdn}</span>. Point a wildcard A record
@@ -268,7 +264,7 @@ export function PreviewDnsGuide({
       </p>
       <div className="min-w-0 overflow-x-auto">
         <table className="w-full min-w-105 text-left">
-          <thead className="text-muted-foreground font-mono text-[10.5px] uppercase tracking-wide">
+          <thead className="text-muted-foreground text-xs">
             <tr>
               <th className="py-1 pr-4">Type</th>
               <th className="py-1 pr-4">Name / Host</th>
@@ -276,7 +272,7 @@ export function PreviewDnsGuide({
               <th className="py-1">TTL</th>
             </tr>
           </thead>
-          <tbody className="text-foreground font-mono text-[12px]">
+          <tbody className="text-foreground font-mono text-sm">
             <tr>
               <td className="py-1 pr-4">A</td>
               <td className="py-1 pr-4">*.{host}</td>
@@ -284,7 +280,7 @@ export function PreviewDnsGuide({
                 <button
                   type="button"
                   onClick={() => serverIp && copy(serverIp)}
-                  className="hover:text-phosphor inline-flex items-center gap-1.5 transition-colors"
+                  className="hover:text-primary inline-flex items-center gap-1.5 transition-colors"
                   title="Copy IP"
                 >
                   {ip}
@@ -312,7 +308,7 @@ export function PreviewDnsGuide({
         <li>Preview containers run alongside production — they never replace it.</li>
       </CalloutBullets>
       {!wildcardDomain && (
-        <p className="text-warning mt-2 text-[12px]">
+        <p className="text-warning mt-2 text-sm">
           This server has no wildcard domain yet — set one before enabling preview deployments.
         </p>
       )}
@@ -350,24 +346,25 @@ export function DomainsSection({
   const dirty = Object.keys(form).length > 0;
 
   return (
-    <div className="space-y-4">
-      <Panel
-        id="domains"
-        title="domains"
-        contentClassName="space-y-3 p-4"
+    <div id="domains" className="space-y-4">
+      <FormSection
+        title="Domains"
+        description="Hostnames this service answers on. HTTPS certificates are issued automatically."
         footer={
           <Button size="sm" onClick={() => saveMut.mutate()} disabled={!dirty || saveMut.isPending}>
             Save
           </Button>
         }
       >
-        <DomainsField
-          serviceId={svc.id}
-          value={val('fqdn', '') ?? ''}
-          onChange={(v) => set('fqdn', v)}
-        />
+        <Field label="Domains">
+          <DomainsField
+            serviceId={svc.id}
+            value={val('fqdn', '') ?? ''}
+            onChange={(v) => set('fqdn', v)}
+          />
+        </Field>
         <DnsGuide serverIp={svc.server?.ip} domain={parseDomains(val('fqdn', '') ?? '')[0]} />
-        <div className="grid gap-3 md:grid-cols-3">
+        <>
           <ToggleField
             label="Force HTTPS"
             checked={settingVal('isForceHttpsEnabled', true)}
@@ -383,8 +380,8 @@ export function DomainsSection({
             checked={settingVal('isStripprefixEnabled', false)}
             onCheckedChange={(c) => set('isStripprefixEnabled', c)}
           />
-        </div>
-      </Panel>
+        </>
+      </FormSection>
     </div>
   );
 }

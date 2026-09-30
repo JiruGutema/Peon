@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Trash2, Play, Download } from 'lucide-react';
+import { DatabaseBackup, Trash2, Play, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -22,7 +21,10 @@ import {
   type ScheduledBackupItem,
 } from '@/services/api/service';
 import { listStorages } from '@/services/api/storages';
-import { Panel } from '@/components/app/page';
+import { FormField, FormSection } from '@/components/app/page';
+import { DataTable } from '@/components/app/data-table';
+import { EmptyState } from '@/components/app/empty-state';
+import { StatusBadge } from '@/components/app/status-badge';
 import { ConfirmButton } from '@/components/app/confirm';
 import { LocalDateTime } from '@/components/app/local-datetime';
 import { useAuthStore } from '@/store/auth';
@@ -55,45 +57,39 @@ export function BackupsSection({ serviceId }: { serviceId: string }) {
 
   return (
     <div className="space-y-4">
-      <Panel
-        title="new backup schedule"
-        contentClassName="space-y-3 p-4"
+      <FormSection
+        title="New backup schedule"
+        description="Logical dumps are stored on the server and can be downloaded or restored from previous runs."
         footer={
           <Button size="sm" onClick={() => addMut.mutate()} disabled={!frequency || addMut.isPending}>
             Add backup schedule
           </Button>
         }
       >
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="backup-freq">Frequency (cron)</Label>
-            <Input
-              id="backup-freq"
-              className="font-mono"
-              placeholder="0 0 * * *"
-              value={frequency}
-              onChange={(e) => setFrequency(e.target.value)}
-            />
-            <p className="text-muted-foreground text-[11px]">
-              Logical dumps are stored on the server and can be downloaded or restored from previous runs.
-            </p>
+        <FormField label="Frequency (cron)" htmlFor="backup-freq">
+          <Input
+            id="backup-freq"
+            className="font-mono"
+            placeholder="0 0 * * *"
+            value={frequency}
+            onChange={(e) => setFrequency(e.target.value)}
+          />
+        </FormField>
+        <FormField
+          label="Backup scope"
+          htmlFor="backup-dump-all"
+          description={
+            dumpAll
+              ? 'Uses pg_dumpall / --all-databases so every database in this service is included.'
+              : 'Dumps only the configured database name for this service.'
+          }
+        >
+          <div className="flex h-8 items-center gap-3">
+            <Switch checked={dumpAll} onCheckedChange={setDumpAll} id="backup-dump-all" />
+            <span className="text-base">Entire instance (all databases)</span>
           </div>
-          <div className="space-y-1.5">
-            <Label>Backup scope</Label>
-            <div className="flex items-center gap-3 pt-1">
-              <Switch checked={dumpAll} onCheckedChange={setDumpAll} id="backup-dump-all" />
-              <Label htmlFor="backup-dump-all" className="font-normal text-[12.5px]">
-                Entire instance (all databases)
-              </Label>
-            </div>
-            <p className="text-muted-foreground text-[11px]">
-              {dumpAll
-                ? 'Uses pg_dumpall / --all-databases so every database in this service is included.'
-                : 'Dumps only the configured database name for this service.'}
-            </p>
-          </div>
-        </div>
-      </Panel>
+        </FormField>
+      </FormSection>
 
       {backups?.length ? (
         backups.map((b) => (
@@ -105,11 +101,11 @@ export function BackupsSection({ serviceId }: { serviceId: string }) {
           />
         ))
       ) : (
-        <Panel contentClassName="p-6">
-          <div className="text-muted-foreground text-center text-[12.5px]">
-            no backup schedules. add one above to protect this database.
-          </div>
-        </Panel>
+        <EmptyState
+          icon={DatabaseBackup}
+          title="No backup schedules"
+          description="Add one above to protect this database."
+        />
       )}
     </div>
   );
@@ -165,23 +161,23 @@ function BackupEditor({
   const dumpAll = val('dumpAll', true);
 
   return (
-    <Panel
+    <FormSection
       title={
-        <span className="inline-flex items-center gap-2 font-mono">
-          {backup.frequency}
-          {!backup.enabled && <Badge variant="outline" className="text-[10px]">disabled</Badge>}
+        <span className="inline-flex flex-wrap items-center gap-2">
+          <span className="font-mono">{backup.frequency}</span>
+          {!backup.enabled && <Badge variant="outline">Disabled</Badge>}
           {backup.dumpAll ? (
-            <Badge variant="outline" className="text-[10px]">all dbs</Badge>
+            <Badge variant="outline">All databases</Badge>
           ) : (
-            <Badge variant="outline" className="text-[10px]">single db</Badge>
+            <Badge variant="outline">Single database</Badge>
           )}
-          {backup.saveS3 && <Badge variant="outline" className="text-[10px]">S3</Badge>}
+          {backup.saveS3 && <Badge variant="outline">S3</Badge>}
         </span>
       }
-      contentClassName="space-y-4 p-4"
       footer={
         <>
           <ConfirmButton
+            size="sm"
             onConfirm={() => delMut.mutate()}
             title="Delete backup schedule?"
             description="The schedule and its execution history will be removed. Existing dump files on the server are not deleted."
@@ -202,54 +198,57 @@ function BackupEditor({
         </>
       }
     >
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <div className="space-y-1.5">
-          <Label>Frequency (cron)</Label>
-          <Input
-            className="font-mono"
-            value={val('frequency', '')}
-            onChange={(e) => set('frequency', e.target.value)}
+      <FormField label="Frequency (cron)" htmlFor={`backup-${backup.id}-frequency`}>
+        <Input
+          id={`backup-${backup.id}-frequency`}
+          className="font-mono"
+          value={val('frequency', '')}
+          onChange={(e) => set('frequency', e.target.value)}
+        />
+      </FormField>
+      <FormField label="Local backups to keep" htmlFor={`backup-${backup.id}-retention`}>
+        <Input
+          id={`backup-${backup.id}-retention`}
+          type="number"
+          value={String(val('retentionAmountLocal', 7))}
+          onChange={(e) => set('retentionAmountLocal', Number(e.target.value) || 0)}
+        />
+      </FormField>
+      <FormField label="Entire instance" htmlFor={`backup-${backup.id}-dump-all`}>
+        <div className="flex h-8 items-center gap-3">
+          <Switch
+            id={`backup-${backup.id}-dump-all`}
+            checked={dumpAll}
+            onCheckedChange={(c) => set('dumpAll', c)}
           />
+          <span className="text-muted-foreground text-sm">
+            {dumpAll ? 'All databases' : 'Configured database only'}
+          </span>
         </div>
-        <div className="space-y-1.5">
-          <Label>Local backups to keep</Label>
-          <Input
-            type="number"
-            value={String(val('retentionAmountLocal', 7))}
-            onChange={(e) => set('retentionAmountLocal', Number(e.target.value) || 0)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Entire instance</Label>
-          <div className="flex items-center gap-3 pt-1">
-            <Switch checked={dumpAll} onCheckedChange={(c) => set('dumpAll', c)} />
-            <span className="text-muted-foreground text-[11px]">
-              {dumpAll ? 'all databases' : 'configured DB only'}
-            </span>
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <Label>Upload to S3</Label>
-          <div className="flex items-center gap-3 pt-1">
-            <Switch checked={saveS3} onCheckedChange={(c) => set('saveS3', c)} />
-            {saveS3 && (
-              <SearchableSelect
-                value={val('s3StorageId', '') ?? ''}
-                onValueChange={(v) => set('s3StorageId', v)}
-                placeholder="Select S3 storage"
-                className="flex-1"
-                options={storages.map((s) => ({ value: s.id, label: s.name }))}
-              />
-            )}
-          </div>
-          {saveS3 && storages.length === 0 && (
-            <p className="text-muted-foreground text-[11px]">No S3 storages configured - add one under Storages.</p>
+      </FormField>
+      <FormField
+        label="Upload to S3"
+        htmlFor={`backup-${backup.id}-s3`}
+        description={
+          saveS3 && storages.length === 0 ? 'No S3 storages configured. Add one under Storages.' : undefined
+        }
+      >
+        <div className="flex min-h-8 items-center gap-3">
+          <Switch id={`backup-${backup.id}-s3`} checked={saveS3} onCheckedChange={(c) => set('saveS3', c)} />
+          {saveS3 && (
+            <SearchableSelect
+              value={val('s3StorageId', '') ?? ''}
+              onValueChange={(v) => set('s3StorageId', v)}
+              placeholder="Select S3 storage"
+              className="flex-1"
+              options={storages.map((s) => ({ value: s.id, label: s.name }))}
+            />
           )}
         </div>
-      </div>
+      </FormField>
 
       <BackupExecutions serviceId={serviceId} backup={backup} />
-    </Panel>
+    </FormSection>
   );
 }
 
@@ -296,84 +295,105 @@ function BackupExecutions({ serviceId, backup }: { serviceId: string; backup: Sc
   });
 
   return (
-    <div className="space-y-2 text-[11px]">
-      <div className="text-muted-foreground font-medium tracking-wide uppercase">
-        Previous backups ({backup._count.executions})
-      </div>
-      <div className="space-y-1.5">
-        {isLoading && items.length === 0 ? (
-          <div className="text-muted-foreground">loading…</div>
-        ) : items.length ? (
-          <>
-            {items.map((e) => (
-              <div key={e.id} className="bg-secondary/50 rounded-md px-3 py-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className={e.status === 'SUCCESS' ? 'text-phosphor' : e.status === 'FAILED' ? 'text-destructive' : ''}>
-                    {e.status.toLowerCase()}
-                    {e.dumpAll ? ' · all dbs' : e.databaseName ? ` · ${e.databaseName}` : ''}
-                    {e.s3Uploaded ? ' · s3' : ''}
-                    {formatBackupSize(e.size) ? ` · ${formatBackupSize(e.size)}` : ''}
-                  </span>
-                  <span className="text-muted-foreground">
-                    <LocalDateTime value={e.startedAt} />
-                  </span>
+    <div className="space-y-2">
+      <div className="text-base font-medium">Previous backups ({backup._count.executions})</div>
+      <DataTable
+        rows={items}
+        rowKey={(e) => e.id}
+        isLoading={isLoading && items.length === 0}
+        emptyState={
+          <p className="text-muted-foreground text-sm">
+            No previous backups yet. Run “Backup now” to create one.
+          </p>
+        }
+        columns={[
+          {
+            key: 'status',
+            header: 'Status',
+            cell: (e) => <StatusBadge status={e.status} />,
+          },
+          {
+            key: 'details',
+            header: 'Details',
+            className: 'w-full max-w-0 whitespace-normal',
+            cell: (e) => (
+              <div className="min-w-0 space-y-1">
+                <div className="text-muted-foreground">
+                  {[
+                    e.dumpAll ? 'All databases' : e.databaseName,
+                    e.s3Uploaded ? 'S3' : null,
+                    formatBackupSize(e.size),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ') || '—'}
                 </div>
                 {e.filename && (
-                  <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-muted-foreground truncate font-mono text-[10.5px]">{e.filename}</span>
-                    {e.status === 'SUCCESS' && (
-                      <div className="flex items-center gap-1.5">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={downloadMut.isPending}
-                          onClick={() => downloadMut.mutate(e.filename!)}
-                        >
-                          <Download className="size-3.5" /> Download
-                        </Button>
-                        <ConfirmButton
-                          onConfirm={() => restoreMut.mutate(e.filename!)}
-                          title="Queue restore of this backup?"
-                          description={
-                            e.dumpAll
-                              ? 'The restore will be queued and applied by the worker. All databases in this instance may be overwritten. This cannot be undone.'
-                              : 'The restore will be queued and applied by the worker. Existing data in the database may be overwritten. This cannot be undone.'
-                          }
-                          confirmLabel="Queue restore"
-                          variant="outline"
-                          confirmVariant="default"
-                          size="sm"
-                          disabled={restoreMut.isPending}
-                        >
-                          Restore
-                        </ConfirmButton>
-                      </div>
-                    )}
-                  </div>
+                  <div className="text-muted-foreground truncate font-mono text-sm">{e.filename}</div>
                 )}
                 {e.message && (
-                  <pre className="text-muted-foreground mt-1 max-h-32 overflow-auto font-mono text-[10.5px] whitespace-pre-wrap">
+                  <pre className="text-muted-foreground max-h-32 overflow-auto font-mono text-sm whitespace-pre-wrap">
                     {e.message}
                   </pre>
                 )}
               </div>
-            ))}
-            {hasNextPage ? (
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full"
-                disabled={isFetchingNextPage}
-                onClick={() => void fetchNextPage()}
-              >
-                {isFetchingNextPage ? 'Loading…' : 'Load more'}
-              </Button>
-            ) : null}
-          </>
-        ) : (
-          <div className="text-muted-foreground">no previous backups yet. run “Backup now” to create one.</div>
-        )}
-      </div>
+            ),
+          },
+          {
+            key: 'started',
+            header: 'Started',
+            cell: (e) => (
+              <span className="text-muted-foreground">
+                <LocalDateTime value={e.startedAt} />
+              </span>
+            ),
+          },
+          {
+            key: 'actions',
+            header: <span className="sr-only">Actions</span>,
+            align: 'right',
+            cell: (e) =>
+              e.filename && e.status === 'SUCCESS' ? (
+                <span className="inline-flex items-center justify-end gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={downloadMut.isPending}
+                    onClick={() => downloadMut.mutate(e.filename!)}
+                  >
+                    <Download className="size-3.5" /> Download
+                  </Button>
+                  <ConfirmButton
+                    onConfirm={() => restoreMut.mutate(e.filename!)}
+                    title="Queue restore of this backup?"
+                    description={
+                      e.dumpAll
+                        ? 'The restore will be queued and applied by the worker. All databases in this instance may be overwritten. This cannot be undone.'
+                        : 'The restore will be queued and applied by the worker. Existing data in the database may be overwritten. This cannot be undone.'
+                    }
+                    confirmLabel="Queue restore"
+                    variant="outline"
+                    confirmVariant="default"
+                    size="sm"
+                    disabled={restoreMut.isPending}
+                  >
+                    Restore
+                  </ConfirmButton>
+                </span>
+              ) : null,
+          },
+        ]}
+      />
+      {hasNextPage ? (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full"
+          disabled={isFetchingNextPage}
+          onClick={() => void fetchNextPage()}
+        >
+          {isFetchingNextPage ? 'Loading…' : 'Load more'}
+        </Button>
+      ) : null}
     </div>
   );
 }

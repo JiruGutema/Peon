@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Trash2, Play } from 'lucide-react';
+import { CalendarClock, Trash2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   listTasks,
@@ -17,9 +16,11 @@ import {
   listTaskExecutions,
   type ScheduledTaskItem,
 } from '@/services/api/service';
-import { Panel } from '@/components/app/page';
+import { FormField, FormSection } from '@/components/app/page';
+import { DataTable } from '@/components/app/data-table';
+import { EmptyState } from '@/components/app/empty-state';
 import { ConfirmButton } from '@/components/app/confirm';
-import { StatusBadge } from '@/components/app/status-badge';
+import { StatusBadge, statusLabel } from '@/components/app/status-badge';
 import { RunOutput } from '@/components/app/run-output';
 import { LocalDateTime } from '@/components/app/local-datetime';
 import { formatLocalDateTime } from '@/lib/datetime';
@@ -48,33 +49,28 @@ export function TasksSection({ serviceId }: { serviceId: string }) {
   });
   return (
     <div className="space-y-4">
-      <Panel
-        title="new scheduled task"
-        contentClassName="space-y-3 p-4"
+      <FormSection
+        title="New scheduled task"
+        description="Runs inside the service container on a cron schedule."
         footer={
           <Button size="sm" onClick={() => addMut.mutate()} disabled={!name || !command || !frequency || addMut.isPending}>
             Add task
           </Button>
         }
       >
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="task-name">Name</Label>
-            <Input id="task-name" placeholder="cleanup-cache" value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="task-freq">Frequency (cron)</Label>
-            <Input
-              id="task-freq"
-              className="font-mono"
-              placeholder="0 0 * * *"
-              value={frequency}
-              onChange={(e) => setFrequency(e.target.value)}
-            />
-          </div>
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="task-cmd">Command (runs inside the container)</Label>
+        <FormField label="Name" htmlFor="task-name">
+          <Input id="task-name" placeholder="cleanup-cache" value={name} onChange={(e) => setName(e.target.value)} />
+        </FormField>
+        <FormField label="Frequency (cron)" htmlFor="task-freq">
+          <Input
+            id="task-freq"
+            className="font-mono"
+            placeholder="0 0 * * *"
+            value={frequency}
+            onChange={(e) => setFrequency(e.target.value)}
+          />
+        </FormField>
+        <FormField label="Command" htmlFor="task-cmd" description="Runs inside the container.">
           <Input
             id="task-cmd"
             className="font-mono"
@@ -82,17 +78,17 @@ export function TasksSection({ serviceId }: { serviceId: string }) {
             value={command}
             onChange={(e) => setCommand(e.target.value)}
           />
-        </div>
-      </Panel>
+        </FormField>
+      </FormSection>
 
       {tasks?.length ? (
         tasks.map((t) => <TaskEditor key={t.id} serviceId={serviceId} task={t} />)
       ) : (
-        <Panel contentClassName="p-6">
-          <div className="text-muted-foreground text-center text-[12.5px]">
-            no scheduled tasks. add one above - it runs inside the service container on a cron schedule.
-          </div>
-        </Panel>
+        <EmptyState
+          icon={CalendarClock}
+          title="No scheduled tasks"
+          description="Add one above. It runs inside the service container on a cron schedule."
+        />
       )}
     </div>
   );
@@ -136,17 +132,17 @@ function TaskEditor({ serviceId, task }: { serviceId: string; task: ScheduledTas
   });
 
   return (
-    <Panel
+    <FormSection
       title={
         <span className="inline-flex items-center gap-2">
           {task.name}
-          {!task.enabled && <Badge variant="outline" className="text-[10px]">disabled</Badge>}
+          {!task.enabled && <Badge variant="outline">Disabled</Badge>}
         </span>
       }
-      contentClassName="space-y-4 p-4"
       footer={
         <>
           <ConfirmButton
+            size="sm"
             onConfirm={() => delMut.mutate()}
             title={`Delete task "${task.name}"?`}
             description="The schedule and its execution history will be permanently removed."
@@ -167,47 +163,44 @@ function TaskEditor({ serviceId, task }: { serviceId: string; task: ScheduledTas
         </>
       }
     >
-      <div className="grid gap-3 md:grid-cols-4">
-        <div className="space-y-1.5">
-          <Label>Name</Label>
-          <Input value={val('name', '')} onChange={(e) => set('name', e.target.value)} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Frequency (cron)</Label>
-          <Input
-            className="font-mono"
-            value={val('frequency', '')}
-            onChange={(e) => set('frequency', e.target.value)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Timeout (seconds)</Label>
-          <Input
-            type="number"
-            value={String(val('timeout', 300))}
-            onChange={(e) => set('timeout', Number(e.target.value) || 300)}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Container name</Label>
-          <Input
-            placeholder="defaults to the service container"
-            value={val('container', '') ?? ''}
-            onChange={(e) => set('container', e.target.value || null)}
-          />
-        </div>
-      </div>
-      <div className="space-y-1.5">
-        <Label>Command</Label>
+      <FormField label="Name" htmlFor={`task-${task.id}-name`}>
+        <Input id={`task-${task.id}-name`} value={val('name', '')} onChange={(e) => set('name', e.target.value)} />
+      </FormField>
+      <FormField label="Frequency (cron)" htmlFor={`task-${task.id}-frequency`}>
         <Input
+          id={`task-${task.id}-frequency`}
+          className="font-mono"
+          value={val('frequency', '')}
+          onChange={(e) => set('frequency', e.target.value)}
+        />
+      </FormField>
+      <FormField label="Timeout (seconds)" htmlFor={`task-${task.id}-timeout`}>
+        <Input
+          id={`task-${task.id}-timeout`}
+          type="number"
+          value={String(val('timeout', 300))}
+          onChange={(e) => set('timeout', Number(e.target.value) || 300)}
+        />
+      </FormField>
+      <FormField label="Container name" htmlFor={`task-${task.id}-container`}>
+        <Input
+          id={`task-${task.id}-container`}
+          placeholder="Defaults to the service container"
+          value={val('container', '') ?? ''}
+          onChange={(e) => set('container', e.target.value || null)}
+        />
+      </FormField>
+      <FormField label="Command" htmlFor={`task-${task.id}-command`}>
+        <Input
+          id={`task-${task.id}-command`}
           className="font-mono"
           value={val('command', '')}
           onChange={(e) => set('command', e.target.value)}
         />
-      </div>
+      </FormField>
 
       <TaskExecutions serviceId={serviceId} task={task} />
-    </Panel>
+    </FormSection>
   );
 }
 
@@ -222,34 +215,48 @@ function TaskExecutions({ serviceId, task }: { serviceId: string; task: Schedule
   const last = task.executions[0];
 
   return (
-    <div className="text-[11px]">
+    <div className="text-sm">
       <button onClick={() => setOpen(!open)} className="text-muted-foreground hover:text-foreground transition-colors">
         {task._count.executions} execution{task._count.executions === 1 ? '' : 's'}
-        {last ? ` · last: ${last.status.toLowerCase()} ${formatLocalDateTime(last.startedAt)}` : ''}
+        {last ? ` · last: ${statusLabel(last.status).toLowerCase()} ${formatLocalDateTime(last.startedAt)}` : ''}
         {open ? ' ▲' : ' ▼'}
       </button>
       {open && (
-        <div className="mt-2 space-y-2">
-          {executions?.length ? (
-            executions.map((e) => (
-              <div
-                key={e.id}
-                className="border-border/60 bg-secondary/30 space-y-2 rounded-lg border px-3 py-2.5"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <StatusBadge status={e.status} />
-                  <span className="text-muted-foreground shrink-0 tabular-nums">
-                    <LocalDateTime value={e.startedAt} />
-                    {e.duration != null ? ` · ${(e.duration / 1000).toFixed(1)}s` : ''}
-                  </span>
-                </div>
-                <RunOutput message={e.message} />
-              </div>
-            ))
-          ) : (
-            <div className="text-muted-foreground">no executions yet.</div>
-          )}
-        </div>
+        <DataTable
+          className="mt-2"
+          rows={executions ?? []}
+          rowKey={(e) => e.id}
+          isLoading={!executions}
+          emptyState={<p className="text-muted-foreground mt-2">No executions yet.</p>}
+          columns={[
+            { key: 'status', header: 'Status', cell: (e) => <StatusBadge status={e.status} /> },
+            {
+              key: 'started',
+              header: 'Started',
+              className: 'whitespace-nowrap',
+              cell: (e) => (
+                <span className="text-muted-foreground tabular-nums">
+                  <LocalDateTime value={e.startedAt} />
+                </span>
+              ),
+            },
+            {
+              key: 'duration',
+              header: 'Duration',
+              cell: (e) => (
+                <span className="text-muted-foreground tabular-nums">
+                  {e.duration != null ? `${(e.duration / 1000).toFixed(1)}s` : '—'}
+                </span>
+              ),
+            },
+            {
+              key: 'output',
+              header: 'Output',
+              className: 'w-full max-w-0 whitespace-normal',
+              cell: (e) => <RunOutput message={e.message} />,
+            },
+          ]}
+        />
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
@@ -18,6 +18,7 @@ import {
   importPreviewEnvFromProduction,
 } from '@/services/api/service';
 import { Panel } from '@/components/app/page';
+import { DataTable } from '@/components/app/data-table';
 import { ConfirmButton } from '@/components/app/confirm';
 import { AccessGateBanner } from '@/components/billing/access-gate-banner';
 import { useCurrentWorkspaceAccess } from '@/lib/billing/workspace-access';
@@ -84,7 +85,7 @@ export function EnvironmentSection({
     <div className="space-y-4">
       {access.blocked ? <AccessGateBanner reason={access.block} /> : null}
       <EnvSection
-        title="production"
+        title="Production"
         description="Used only by production deploys. The same key can exist in Preview with a different value."
         serviceId={serviceId}
         isPreview={false}
@@ -95,7 +96,7 @@ export function EnvironmentSection({
       />
 
       <EnvSection
-        title="preview"
+        title="Preview"
         description="Used only by PR preview deploys. Import from production to copy keys, then change values as needed."
         serviceId={serviceId}
         isPreview
@@ -154,11 +155,12 @@ function EnvSection({
   const [value, setValue] = useState('');
   const [isBuildtime, setIsBuildtime] = useState(true);
   const [isRuntime, setIsRuntime] = useState(true);
+  const [editingIds, setEditingIds] = useState<Set<string>>(() => new Set());
   const switchId = `dev-mode-${isPreview ? 'preview' : 'production'}`;
 
   const developerModeToggle = (
     <div className="flex shrink-0 items-center gap-2">
-      <Label htmlFor={switchId} className="text-muted-foreground text-[12px] font-normal tracking-normal">
+      <Label htmlFor={switchId} className="text-muted-foreground text-sm font-normal">
         Developer mode
       </Label>
       <Switch
@@ -205,87 +207,130 @@ function EnvSection({
     );
   }
 
-  return (
-    <div className="space-y-3">
-      <Panel
-        title={title}
-        actions={headerActions}
-        contentClassName="space-y-3 p-4"
-        footer={
-          <Button
-            size="sm"
-            onClick={() => addMut.mutate()}
-            disabled={!canWrite || !key || addMut.isPending}
-          >
-            Add {isPreview ? 'preview' : 'production'} variable
-          </Button>
-        }
-      >
-        <p className="text-muted-foreground text-[12px]">{description}</p>
-        <div className="flex gap-2">
-          <Input
-            placeholder="KEY"
-            value={key}
-            disabled={!canWrite}
-            onChange={(e) => setKey(e.target.value)}
-          />
-          <Input
-            placeholder="value"
-            value={value}
-            disabled={!canWrite}
-            onChange={(e) => setValue(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-4 text-sm">
-          <label className="flex items-center gap-2">
-            <Switch checked={isBuildtime} disabled={!canWrite} onCheckedChange={setIsBuildtime} /> Build
-          </label>
-          <label className="flex items-center gap-2">
-            <Switch checked={isRuntime} disabled={!canWrite} onCheckedChange={setIsRuntime} /> Runtime
-          </label>
-        </div>
-      </Panel>
+  type EnvVar = (typeof vars)[number];
+  const stopEditing = (id: string) =>
+    setEditingIds((ids) => {
+      const next = new Set(ids);
+      next.delete(id);
+      return next;
+    });
 
-      <Panel contentClassName="divide-y">
-        {vars.length ? (
-          vars.map((v) => (
-            <EnvRow
-              key={v.id}
-              serviceId={serviceId}
-              env={v}
-              canWrite={canWrite}
-              showPreviewBadge={false}
-              onChanged={onChanged}
-              onDelete={() => onDelete(v.id)}
-            />
-          ))
-        ) : (
-          <div className="text-muted-foreground p-6 text-center text-[12.5px]">
-            no {isPreview ? 'preview' : 'production'} variables.
-          </div>
-        )}
-      </Panel>
-    </div>
+  return (
+    <Panel title={title} description={description} actions={headerActions} padded={false}>
+      <div className="flex flex-wrap items-center gap-2 border-b p-4">
+        <Input
+          className="min-w-40 flex-1 font-mono"
+          placeholder="KEY"
+          aria-label="Key"
+          value={key}
+          disabled={!canWrite}
+          onChange={(e) => setKey(e.target.value)}
+        />
+        <Input
+          className="min-w-40 flex-1 font-mono"
+          placeholder="value"
+          aria-label="Value"
+          value={value}
+          disabled={!canWrite}
+          onChange={(e) => setValue(e.target.value)}
+        />
+        <label className="flex items-center gap-2 text-base">
+          <Switch checked={isBuildtime} disabled={!canWrite} onCheckedChange={setIsBuildtime} /> Build
+        </label>
+        <label className="flex items-center gap-2 text-base">
+          <Switch checked={isRuntime} disabled={!canWrite} onCheckedChange={setIsRuntime} /> Runtime
+        </label>
+        <Button onClick={() => addMut.mutate()} disabled={!canWrite || !key || addMut.isPending}>
+          Add {isPreview ? 'preview' : 'production'} variable
+        </Button>
+      </div>
+      <DataTable<EnvVar>
+        className="rounded-none border-0"
+        rows={vars}
+        rowKey={(v) => v.id}
+        emptyState={
+          <p className="text-muted-foreground p-6 text-center text-base">
+            No {isPreview ? 'preview' : 'production'} variables.
+          </p>
+        }
+        columns={[
+          {
+            key: 'key',
+            header: 'Key',
+            className: 'w-1/3',
+            cell: (v) => (
+              <span className="flex min-w-0 flex-wrap items-center gap-2">
+                <span className="font-mono font-medium break-all">{v.key}</span>
+                {v.isBuildtime && <Badge variant="secondary">Build</Badge>}
+                {v.isRuntime && <Badge variant="secondary">Runtime</Badge>}
+              </span>
+            ),
+          },
+          {
+            key: 'value',
+            header: 'Value',
+            cell: (v) => (
+              <EnvValueCell
+                serviceId={serviceId}
+                env={v}
+                canWrite={canWrite}
+                editing={editingIds.has(v.id)}
+                onDone={() => stopEditing(v.id)}
+                onChanged={onChanged}
+              />
+            ),
+          },
+          {
+            key: 'actions',
+            header: <span className="sr-only">Actions</span>,
+            align: 'right',
+            className: 'w-40',
+            cell: (v) =>
+              canWrite && !editingIds.has(v.id) ? (
+                <span className="inline-flex items-center justify-end gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setEditingIds((ids) => new Set(ids).add(v.id))}
+                  >
+                    Edit
+                  </Button>
+                  <ConfirmButton
+                    size="sm"
+                    onConfirm={() => onDelete(v.id)}
+                    title={`Delete ${v.key}?`}
+                    description="The variable will be removed from this service. A redeploy is required to apply."
+                  >
+                    <Trash2 className="size-3.5" /> Delete
+                  </ConfirmButton>
+                </span>
+              ) : null,
+          },
+        ]}
+      />
+    </Panel>
   );
 }
 
-/** Vercel-style inline row: masked at rest, expands into an editable form. */
-function EnvRow({
+/**
+ * Value cell of an env row: masked at rest, expands into an editable form
+ * (Vercel-style) while its row is being edited.
+ */
+function EnvValueCell({
   serviceId,
   env,
   canWrite,
+  editing,
+  onDone,
   onChanged,
-  onDelete,
-  showPreviewBadge = true,
 }: {
   serviceId: string;
   env: { id: string; key: string; value: string; isPreview: boolean; isBuildtime: boolean; isRuntime: boolean };
   canWrite: boolean;
+  editing: boolean;
+  onDone: () => void;
   onChanged: () => void;
-  onDelete: () => void;
-  showPreviewBadge?: boolean;
 }) {
-  const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<{ value: string; isBuildtime: boolean; isRuntime: boolean } | null>(null);
 
   // Fetch decrypted values only while a row is being edited (and writes are allowed).
@@ -316,7 +361,7 @@ function EnvRow({
         isRuntime: effective?.isRuntime ?? env.isRuntime,
       }),
     onSuccess: () => {
-      setEditing(false);
+      onDone();
       setForm(null);
       onChanged();
       toast.success('Variable saved');
@@ -326,19 +371,16 @@ function EnvRow({
 
   if (editing && canWrite) {
     return (
-      <div className="space-y-3 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[12.5px] font-medium">{env.key}</span>
-          {showPreviewBadge && env.isPreview && <Badge variant="outline">preview</Badge>}
-        </div>
+      <div className="space-y-2">
         <Input
           className="font-mono"
+          aria-label={`Value of ${env.key}`}
           value={effective?.value ?? ''}
-          placeholder={revealLoading || effective === null ? 'loading value…' : ''}
+          placeholder={revealLoading || effective === null ? 'Loading value…' : ''}
           disabled={revealLoading || effective === null}
           onChange={(e) => effective && setForm({ ...effective, value: e.target.value })}
         />
-        <div className="flex flex-wrap items-center gap-4 text-[12px]">
+        <div className="flex flex-wrap items-center gap-4 text-base">
           <label className="flex items-center gap-2">
             <Switch
               checked={effective?.isBuildtime ?? env.isBuildtime}
@@ -354,7 +396,14 @@ function EnvRow({
             Runtime
           </label>
           <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => { setEditing(false); setForm(null); }}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                onDone();
+                setForm(null);
+              }}
+            >
               Cancel
             </Button>
             <Button size="sm" onClick={() => saveMut.mutate()} disabled={effective === null || saveMut.isPending}>
@@ -366,31 +415,7 @@ function EnvRow({
     );
   }
 
-  return (
-    <div className="hover:bg-secondary flex min-w-0 items-center justify-between gap-4 px-4 py-3 text-[12.5px] transition-colors">
-      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
-        <span className="shrink-0 font-mono font-medium">{env.key}</span>
-        <span className="text-muted-foreground min-w-0 truncate font-mono">{env.value}</span>
-        {showPreviewBadge && env.isPreview && <Badge variant="outline">preview</Badge>}
-        {env.isBuildtime && <Badge variant="secondary">build</Badge>}
-        {env.isRuntime && <Badge variant="secondary">runtime</Badge>}
-      </div>
-      {canWrite ? (
-        <div className="flex shrink-0 items-center gap-1.5">
-          <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-            Edit
-          </Button>
-          <ConfirmButton
-            onConfirm={onDelete}
-            title={`Delete ${env.key}?`}
-            description="The variable will be removed from this service. A redeploy is required to apply."
-          >
-            <Trash2 className="size-4" /> Delete
-          </ConfirmButton>
-        </div>
-      ) : null}
-    </div>
-  );
+  return <span className="text-muted-foreground block min-w-0 truncate font-mono">{env.value}</span>;
 }
 
 /**
@@ -444,7 +469,7 @@ function EnvDeveloperEditor({
     <Panel
       title={title}
       actions={actions}
-      contentClassName="space-y-2 p-4"
+      contentClassName="space-y-2"
       footer={
         <Button
           size="sm"
@@ -455,14 +480,14 @@ function EnvDeveloperEditor({
         </Button>
       }
     >
-      <p className="text-muted-foreground text-[11.5px]">
+      <p className="text-muted-foreground text-sm">
         Edit {isPreview ? 'preview' : 'production'} variables as one .env document (KEY=value per line, #
         comments ignored). Saving replaces this set — variables removed here are deleted.
       </p>
       <Textarea
-        className="max-h-[60vh] min-h-72 overflow-y-auto font-mono text-[12px] break-all [field-sizing:fixed]"
+        className="max-h-[60vh] min-h-72 overflow-y-auto font-mono text-sm break-all [field-sizing:fixed]"
         value={doc ?? ''}
-        placeholder={doc === null ? 'loading variables…' : 'KEY=value'}
+        placeholder={doc === null ? 'Loading variables…' : 'KEY=value'}
         disabled={!canWrite || doc === null}
         onChange={(e) => setRaw(e.target.value)}
         spellCheck={false}

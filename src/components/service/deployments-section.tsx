@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Trash2, ExternalLink, RefreshCw } from 'lucide-react';
+import { Trash2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { rollbackService, listPreviews, deletePreview } from '@/services/api/service';
 import { listDeployments, cancelDeployment, type DeploymentListItem } from '@/services/api/deployment';
 import { Panel } from '@/components/app/page';
+import { DataTable } from '@/components/app/data-table';
+import { formatDuration } from '@/lib/datetime';
 import { ConfirmButton } from '@/components/app/confirm';
 import { StatusBadge } from '@/components/app/status-badge';
 import { LocalDateTime } from '@/components/app/local-datetime';
@@ -17,14 +19,14 @@ import { invalidateServiceQueries } from '@/lib/queries/service';
 export function DeploymentsSection({
   serviceId,
   projectId,
-  onDeploy,
-  onForceDeploy,
 }: {
   serviceId: string;
   projectId: string;
   onDeploy: () => void;
   onForceDeploy: () => void;
 }) {
+  // Deploy / force rebuild live in the page header (ServiceActions); onDeploy and
+  // onForceDeploy stay in the props so the router's call site is unchanged.
   const qc = useQueryClient();
   const { data: deployments } = useQuery({
     queryKey: ['deployments', serviceId],
@@ -106,153 +108,194 @@ export function DeploymentsSection({
     }));
   })();
 
+  const deploymentHref = (d: DeploymentListItem) =>
+    `/projects/${projectId}/services/${serviceId}/deployments/${d.id}`;
+
   return (
     <div className="space-y-4">
-      <Panel
-        title="deployments"
-        actions={
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={onForceDeploy}
-              title="Clear cached source and rebuild without Docker/Nixpacks cache"
-            >
-              <RefreshCw className="size-3.5" /> Force rebuild
-            </Button>
-            <Button onClick={onDeploy}>Deploy now</Button>
-          </div>
-        }
-        contentClassName="divide-y"
-      >
-        {deployments?.length ? (
-          deployments.map((d: DeploymentListItem) => {
-            const preview =
-              d.isPreview && d.pullRequestId != null
-                ? previewByPr.get(d.pullRequestId)
-                : undefined;
-            return (
-              <div
-                key={d.id}
-                className="hover:bg-secondary/50 flex items-center justify-between gap-4 px-4 py-3 transition-colors"
-              >
-                <Link
-                  href={`/projects/${projectId}/services/${serviceId}/deployments/${d.id}`}
-                  className="flex min-w-0 flex-1 items-center gap-2 text-sm"
-                >
-                  <StatusBadge status={d.status} />
-                  {d.isPreview && (
-                    <Badge variant="outline" className="shrink-0 text-[10px]">
-                      preview{d.pullRequestId != null ? ` #${d.pullRequestId}` : ''}
-                    </Badge>
-                  )}
-                  <span className="text-muted-foreground font-mono text-xs">
+      <Panel title="Deployments" padded={false}>
+        <DataTable
+          className="rounded-none border-0"
+          rows={deployments ?? []}
+          rowKey={(d) => d.id}
+          rowHref={deploymentHref}
+          isLoading={!deployments}
+          emptyState={
+            <p className="text-muted-foreground p-6 text-center text-base">No deployments yet.</p>
+          }
+          columns={[
+            { key: 'status', header: 'Status', cell: (d) => <StatusBadge status={d.status} /> },
+            {
+              key: 'commit',
+              header: 'Commit',
+              className: 'w-full max-w-0',
+              cell: (d) => (
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="shrink-0 font-mono">
                     {d.commitSha ? d.commitSha.slice(0, 7) : d.uuid.slice(0, 7)}
                   </span>
+                  {d.isPreview && (
+                    <Badge variant="outline" className="shrink-0">
+                      Preview{d.pullRequestId != null ? ` #${d.pullRequestId}` : ''}
+                    </Badge>
+                  )}
                   {d.commitMessage && (
-                    <span className="text-foreground max-w-72 truncate text-xs">
-                      {d.commitMessage}
-                    </span>
+                    <span className="text-muted-foreground min-w-0 truncate">{d.commitMessage}</span>
                   )}
-                  <span className="text-muted-foreground text-xs">
-                    <LocalDateTime value={d.createdAt} />
-                  </span>
-                </Link>
-                <div className="flex shrink-0 gap-2">
-                  {d.previewUrl && (
+                </span>
+              ),
+            },
+            {
+              key: 'trigger',
+              header: 'Trigger',
+              cell: (d) => (
+                <span className="text-muted-foreground">
+                  {[d.triggeredBy, d.forceRebuild && 'force rebuild', d.restartOnly && 'restart only']
+                    .filter(Boolean)
+                    .join(' · ') || '—'}
+                </span>
+              ),
+            },
+            {
+              key: 'started',
+              header: 'Started',
+              cell: (d) => (
+                <span className="text-muted-foreground">
+                  <LocalDateTime value={d.startedAt ?? d.createdAt} />
+                </span>
+              ),
+            },
+            {
+              key: 'duration',
+              header: 'Duration',
+              cell: (d) => (
+                <span className="text-muted-foreground tabular-nums">
+                  {formatDuration(d.startedAt, d.finishedAt) ?? '—'}
+                </span>
+              ),
+            },
+            {
+              key: 'actions',
+              header: <span className="sr-only">Actions</span>,
+              align: 'right',
+              cell: (d) => {
+                const preview =
+                  d.isPreview && d.pullRequestId != null
+                    ? previewByPr.get(d.pullRequestId)
+                    : undefined;
+                return (
+                  <span className="relative z-10 inline-flex items-center justify-end gap-1.5">
+                    {d.previewUrl && (
+                      <Button asChild size="sm" variant="ghost">
+                        <a href={d.previewUrl} target="_blank" rel="noopener noreferrer" title={d.previewUrl}>
+                          <ExternalLink className="size-3.5" /> Open
+                        </a>
+                      </Button>
+                    )}
                     <Button asChild size="sm" variant="ghost">
-                      <a href={d.previewUrl} target="_blank" rel="noopener noreferrer" title={d.previewUrl}>
-                        <ExternalLink className="size-3.5" /> Open
-                      </a>
+                      <Link href={deploymentHref(d)}>View</Link>
                     </Button>
-                  )}
-                  <Button asChild size="sm" variant="ghost">
-                    <Link href={`/projects/${projectId}/services/${serviceId}/deployments/${d.id}`}>
-                      View
-                    </Link>
-                  </Button>
-                  {(d.status === 'QUEUED' || d.status === 'IN_PROGRESS') && (
-                    <ConfirmButton
-                      title="Cancel this deployment?"
-                      description="Stops the in-progress deploy. Partial changes on the server may remain until the next successful deploy."
-                      confirmLabel="Cancel deployment"
-                      variant="outline"
-                      confirmVariant="default"
-                      size="sm"
-                      disabled={cancelMut.isPending}
-                      onConfirm={() => cancelMut.mutate(d.id)}
-                    >
-                      Cancel
-                    </ConfirmButton>
-                  )}
-                  {!d.isPreview &&
-                    (d.status === 'FINISHED' || d.status === 'FAILED') &&
-                    d.commitSha && (
+                    {(d.status === 'QUEUED' || d.status === 'IN_PROGRESS') && (
                       <ConfirmButton
-                        title="Rollback to this deployment?"
-                        description="Queues a new deploy using this commit. Current running version will be replaced."
-                        confirmLabel="Rollback"
+                        title="Cancel this deployment?"
+                        description="Stops the in-progress deploy. Partial changes on the server may remain until the next successful deploy."
+                        confirmLabel="Cancel deployment"
                         variant="outline"
                         confirmVariant="default"
                         size="sm"
-                        disabled={rollbackMut.isPending}
-                        onConfirm={() => rollbackMut.mutate(d.id)}
+                        disabled={cancelMut.isPending}
+                        onConfirm={() => cancelMut.mutate(d.id)}
                       >
-                        Rollback
+                        Cancel
                       </ConfirmButton>
                     )}
-                  {preview && (
-                    <ConfirmButton
-                      title={`Delete preview for PR #${preview.pullRequestId}?`}
-                      description="Stops and removes this preview deployment from the server."
-                      confirmLabel="Delete"
-                      variant="ghost"
-                      size="sm"
-                      disabled={delPreviewMut.isPending}
-                      onConfirm={() => delPreviewMut.mutate(preview.id)}
-                    >
-                      <Trash2 className="size-3.5" /> Delete
-                    </ConfirmButton>
-                  )}
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <div className="text-muted-foreground p-6 text-center text-[12.5px]">no deployments yet.</div>
-        )}
+                    {!d.isPreview &&
+                      (d.status === 'FINISHED' || d.status === 'FAILED') &&
+                      d.commitSha && (
+                        <ConfirmButton
+                          title="Rollback to this deployment?"
+                          description="Queues a new deploy using this commit. Current running version will be replaced."
+                          confirmLabel="Rollback"
+                          variant="outline"
+                          confirmVariant="default"
+                          size="sm"
+                          disabled={rollbackMut.isPending}
+                          onConfirm={() => rollbackMut.mutate(d.id)}
+                        >
+                          Rollback
+                        </ConfirmButton>
+                      )}
+                    {preview && (
+                      <ConfirmButton
+                        title={`Delete preview for PR #${preview.pullRequestId}?`}
+                        description="Stops and removes this preview deployment from the server."
+                        confirmLabel="Delete"
+                        variant="ghost"
+                        size="sm"
+                        disabled={delPreviewMut.isPending}
+                        onConfirm={() => delPreviewMut.mutate(preview.id)}
+                      >
+                        <Trash2 className="size-3.5" /> Delete
+                      </ConfirmButton>
+                    )}
+                  </span>
+                );
+              },
+            },
+          ]}
+        />
       </Panel>
 
-      <Panel title="preview deployments" contentClassName="divide-y px-4">
-        {previewPanelRows.length ? (
-          previewPanelRows.map((p) => {
-            const href = p.fqdn
-              ? p.fqdn.startsWith('http')
-                ? p.fqdn
-                : `https://${p.fqdn}`
-              : null;
-            return (
-              <div key={p.key} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                  <Badge variant="outline" className="text-[10px]">
-                    preview #{p.pullRequestId}
-                  </Badge>
-                  {href ? (
-                    <a
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-phosphor hover:underline inline-flex min-w-0 items-center gap-1 truncate font-mono text-[12px]"
-                      title={href}
-                    >
-                      <ExternalLink className="size-3 shrink-0" />
-                      <span className="truncate">{href.replace(/^https?:\/\//, '')}</span>
-                    </a>
-                  ) : (
-                    <span className="text-muted-foreground text-[12px]">no URL yet</span>
-                  )}
-                </span>
-                <div className="flex shrink-0 items-center gap-2">
-                  <StatusBadge status={p.status} />
+      <Panel title="Preview deployments" padded={false}>
+        <DataTable
+          className="rounded-none border-0"
+          rows={previewPanelRows}
+          rowKey={(p) => p.key}
+          emptyState={
+            <p className="text-muted-foreground p-6 text-center text-base">
+              No active preview environments. Enable preview deployments in Configuration, then open a
+              PR against this service&apos;s branch.
+            </p>
+          }
+          columns={[
+            {
+              key: 'pr',
+              header: 'Pull request',
+              cell: (p) => <Badge variant="outline">Preview #{p.pullRequestId}</Badge>,
+            },
+            {
+              key: 'url',
+              header: 'URL',
+              className: 'w-full max-w-0',
+              cell: (p) => {
+                const href = p.fqdn
+                  ? p.fqdn.startsWith('http')
+                    ? p.fqdn
+                    : `https://${p.fqdn}`
+                  : null;
+                return href ? (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary inline-flex max-w-full min-w-0 items-center gap-1 font-mono hover:underline"
+                    title={href}
+                  >
+                    <ExternalLink className="size-3 shrink-0" />
+                    <span className="truncate">{href.replace(/^https?:\/\//, '')}</span>
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground">No URL yet</span>
+                );
+              },
+            },
+            { key: 'status', header: 'Status', cell: (p) => <StatusBadge status={p.status} /> },
+            {
+              key: 'actions',
+              header: <span className="sr-only">Actions</span>,
+              align: 'right',
+              cell: (p) => (
+                <span className="inline-flex items-center justify-end gap-1.5">
                   {p.latestDeploymentId && (
                     <Button asChild size="sm" variant="ghost">
                       <Link
@@ -275,16 +318,11 @@ export function DeploymentsSection({
                       <Trash2 className="size-3.5" /> Delete
                     </ConfirmButton>
                   )}
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <div className="text-muted-foreground py-6 text-center text-[12.5px]">
-            No active preview environments. Enable Preview deployments in Configuration, then open a
-            PR against this service&apos;s branch.
-          </div>
-        )}
+                </span>
+              ),
+            },
+          ]}
+        />
       </Panel>
     </div>
   );

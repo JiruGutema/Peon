@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { getServiceLogs } from '@/services/api/service';
-import { Panel } from '@/components/app/page';
 
 export function LogsSection({ serviceId }: { serviceId: string }) {
   const [tail, setTail] = useState(200);
@@ -56,12 +55,12 @@ export function LogsSection({ serviceId }: { serviceId: string }) {
               size="sm"
               options={[100, 200, 500, 1000, 2000].map((n) => ({
                 value: String(n),
-                label: `last ${n} lines`,
+                label: `Last ${n} lines`,
               }))}
             />
           </div>
-          <label className="text-muted-foreground flex items-center gap-2 text-[12px]">
-            <Switch checked={follow} onCheckedChange={setFollow} /> auto-refresh
+          <label className="text-muted-foreground flex items-center gap-2 text-sm">
+            <Switch checked={follow} onCheckedChange={setFollow} /> Auto-refresh
           </label>
         </div>
         <div className="flex items-center gap-2">
@@ -74,13 +73,20 @@ export function LogsSection({ serviceId }: { serviceId: string }) {
         </div>
       </div>
 
-      <Panel
-        title={data ? `container: ${data.container}` : 'logs'}
-        contentClassName="bg-[#0a0f0c] flex min-h-0 flex-1 flex-col"
-        className="flex min-h-0 flex-1 flex-col"
-      >
+      <div className="border-border bg-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
+        <div className="text-muted-foreground shrink-0 border-b px-4 py-2 text-sm">
+          {data ? (
+            <>
+              Container <span className="text-foreground font-mono">{data.container}</span>
+            </>
+          ) : (
+            'Logs'
+          )}
+        </div>
         <div className="min-h-0 flex-1 overflow-auto p-4">
-          <pre className="font-mono text-[11.5px] leading-relaxed whitespace-pre-wrap text-neutral-200">
+          <pre
+            className={`font-mono text-sm leading-relaxed whitespace-pre-wrap ${error ? 'text-destructive' : 'text-foreground'}`}
+          >
             {error
               ? `Failed to fetch logs: ${error instanceof Error ? error.message : 'unknown error'}`
               : data?.lines.length
@@ -91,7 +97,7 @@ export function LogsSection({ serviceId }: { serviceId: string }) {
           </pre>
           <div ref={endRef} />
         </div>
-      </Panel>
+      </div>
     </div>
   );
 }

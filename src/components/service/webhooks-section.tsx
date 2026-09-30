@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Trash2, Copy } from 'lucide-react';
@@ -9,8 +9,15 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Callout, CalloutBullets } from '@/components/app/callout';
 import { listWebhooks, createWebhook, deleteWebhook } from '@/services/api/service';
 import { Panel } from '@/components/app/page';
+import { DataTable } from '@/components/app/data-table';
 import { ConfirmButton } from '@/components/app/confirm';
 import { publicEnv } from '@/lib/env';
+
+const PROVIDER_LABELS: Record<string, string> = {
+  generic: 'Generic',
+  github: 'GitHub',
+  gitlab: 'GitLab',
+};
 
 export function WebhooksSection({
   serviceId,
@@ -55,7 +62,7 @@ export function WebhooksSection({
 
   return (
     <div className="space-y-4">
-      <Callout title="Independent deploy webhooks" defaultOpen>
+      <Callout tone="info" title="Independent deploy webhooks" defaultOpen>
         <p>
           These are standalone URLs for this service only. Create one, copy the URL, and call it from
           GitHub, GitLab, CI, or any HTTP client. A matching push queues a deployment
@@ -93,7 +100,8 @@ export function WebhooksSection({
       </Callout>
 
       <Panel
-        title="deploy webhooks"
+        title="Deploy webhooks"
+        padded={false}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <div className="w-36">
@@ -109,52 +117,77 @@ export function WebhooksSection({
                 ]}
               />
             </div>
-            <Button onClick={() => createMut.mutate()} disabled={createMut.isPending}>
+            <Button size="sm" onClick={() => createMut.mutate()} disabled={createMut.isPending}>
               New webhook
             </Button>
           </div>
         }
-        contentClassName="divide-y"
       >
-        {webhooks?.length ? (
-          webhooks.map((w) => (
-            <div
-              key={w.id}
-              className="hover:bg-secondary flex min-w-0 items-center justify-between gap-4 px-4 py-3 text-[12.5px] transition-colors"
-            >
-              <div className="flex min-w-0 flex-1 flex-col gap-1 overflow-hidden">
-                <span className="min-w-0 break-all font-mono text-xs">{webhookUrl(w.token)}</span>
-                <span className="text-muted-foreground text-xs">
-                  provider: {w.provider}
-                  {w.provider !== 'generic' ? ' · use the path token as the webhook secret' : ''}
+        <DataTable
+          className="rounded-none border-0"
+          rows={webhooks ?? []}
+          rowKey={(w) => w.id}
+          emptyState={
+            <p className="text-muted-foreground p-6 text-center text-base">
+              No webhooks yet. Create one to get a deploy URL.
+            </p>
+          }
+          columns={[
+            {
+              key: 'url',
+              header: 'URL',
+              className: 'w-full max-w-0 whitespace-normal',
+              cell: (w) => (
+                <span className="block min-w-0 font-mono break-all">{webhookUrl(w.token)}</span>
+              ),
+            },
+            {
+              key: 'provider',
+              header: 'Provider',
+              cell: (w) => (
+                <span
+                  className="text-muted-foreground"
+                  title={w.provider !== 'generic' ? 'Use the path token as the webhook secret' : undefined}
+                >
+                  {PROVIDER_LABELS[w.provider] ?? w.provider}
                 </span>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void copyUrl(w.token)}
-                  title="Copy URL"
-                >
-                  <Copy className="size-3.5" />
-                </Button>
-                <ConfirmButton
-                  onConfirm={() => delMut.mutate(w.id)}
-                  title="Delete webhook?"
-                  description="External systems calling this webhook URL will stop triggering deployments."
-                >
-                  <Trash2 className="size-4" /> Delete
-                </ConfirmButton>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="text-muted-foreground p-6 text-center text-[12.5px]">
-            No webhooks yet. Create one to get a deploy URL.
-          </div>
-        )}
+              ),
+            },
+            {
+              key: 'actions',
+              header: <span className="sr-only">Actions</span>,
+              align: 'right',
+              cell: (w) => (
+                <span className="inline-flex items-center justify-end gap-1.5">
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="outline"
+                    onClick={() => void copyUrl(w.token)}
+                    title="Copy URL"
+                    aria-label="Copy URL"
+                  >
+                    <Copy className="size-3.5" />
+                  </Button>
+                  <ConfirmButton
+                    size="sm"
+                    onConfirm={() => delMut.mutate(w.id)}
+                    title="Delete webhook?"
+                    description="External systems calling this webhook URL will stop triggering deployments."
+                  >
+                    <Trash2 className="size-3.5" /> Delete
+                  </ConfirmButton>
+                </span>
+              ),
+            },
+          ]}
+        />
       </Panel>
+      {webhooks?.some((w) => w.provider !== 'generic') ? (
+        <p className="text-muted-foreground text-sm">
+          For GitHub and GitLab webhooks, use the path token as the webhook secret.
+        </p>
+      ) : null}
     </div>
   );
 }

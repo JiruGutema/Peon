@@ -1,13 +1,12 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Copy } from 'lucide-react';
 import { githubRepoSlug } from '@/lib/github-urls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import {
@@ -20,7 +19,7 @@ import {
 } from '@/services/api/service';
 import { listPrivateKeys } from '@/services/api/privatekey';
 import { listGithubSourceBranches, listGithubSourceRepositories, listSources } from '@/services/api/sources';
-import { Panel } from '@/components/app/page';
+import { FormField, FormSection } from '@/components/app/page';
 import { useAuthStore } from '@/store/auth';
 import { Field, ToggleField } from './fields';
 import { PreviewDnsGuide } from './domains-section';
@@ -162,14 +161,9 @@ export function ConfigurationSection({
   );
 
   return (
-    <div>
-      <div className="space-y-4">
-      <Panel
-        id="general"
-        title="general"
-        contentClassName="grid gap-3 p-4 md:grid-cols-2"
-        footer={saveFooter}
-      >
+    <div className="space-y-4">
+      <div id="general">
+      <FormSection title="General" footer={saveFooter}>
         <Field label="Name">
           <Input value={val('name', '')} onChange={(e) => set('name', e.target.value)} />
         </Field>
@@ -188,7 +182,7 @@ export function ConfigurationSection({
             }))}
           />
           {!svc.serverId && (
-            <p className="text-muted-foreground text-[11px]">Assign a server before deploying this service.</p>
+            <p className="text-muted-foreground text-sm">Assign a server before deploying this service.</p>
           )}
         </Field>
         {isGit && (
@@ -209,10 +203,12 @@ export function ConfigurationSection({
             />
           </Field>
         )}
-      </Panel>
+      </FormSection>
+      </div>
 
       {isGit && (
-        <Panel id="git-source" title="git source" contentClassName="grid gap-3 p-4 md:grid-cols-2" footer={saveFooter}>
+        <div id="git-source">
+        <FormSection title="Git source" footer={saveFooter}>
           <Field label="Git source type">
             <SearchableSelect
               value={gitUiMode}
@@ -248,7 +244,7 @@ export function ConfigurationSection({
               }}
               placeholder="Select source type"
               options={[
-                { value: 'GIT_APP', label: 'Git App' },
+                { value: 'GIT_APP', label: 'Git app' },
                 { value: 'PUBLIC', label: 'Public repository' },
                 { value: 'DEPLOY_KEY', label: 'Deploy key' },
               ]}
@@ -297,7 +293,7 @@ export function ConfigurationSection({
                 />
               </Field>
               {selectedGithubSource?.status && selectedGithubSource.status !== 'CONNECTED' ? (
-                <p className="text-muted-foreground col-span-full text-[12px]">
+                <p className="text-muted-foreground text-sm">
                   This GitHub connection is {selectedGithubSource.status.toLowerCase()}. Reconnect under
                   Sources before deploying.
                 </p>
@@ -404,13 +400,15 @@ export function ConfigurationSection({
               />
             </Field>
           )}
-        </Panel>
+        </FormSection>
+        </div>
       )}
 
       {isGit && (
-        <Panel id="build" title="build" contentClassName="space-y-3 p-4" footer={saveFooter}>
+        <div id="build">
+        <FormSection title="Build" footer={saveFooter}>
           {!isDockerfilePack && (
-            <div className="grid gap-3 md:grid-cols-3">
+            <>
               <Field
                 label="Install command"
                 tooltip="Overrides the pack’s install step (Nixpacks/Railpack via NIXPACKS_INSTALL_CMD). Example: pnpm install --frozen-lockfile. Leave empty to let the pack detect it."
@@ -429,7 +427,7 @@ export function ConfigurationSection({
               >
                 <Input value={val('startCommand', '') ?? ''} onChange={(e) => set('startCommand', e.target.value || null)} />
               </Field>
-            </div>
+            </>
           )}
           {isDockerfilePack && (
             <Field
@@ -443,7 +441,7 @@ export function ConfigurationSection({
               />
             </Field>
           )}
-          <div className="grid gap-3 md:grid-cols-3">
+          <>
             <Field
               label="Base directory"
               tooltip="Repo subdirectory used as the build context (e.g. /apps/web). Defaults to / (repository root). Dockerfile location and install/build commands run relative to this."
@@ -460,7 +458,7 @@ export function ConfigurationSection({
                   value={val('dockerfilePath', '/Dockerfile')}
                   onChange={(e) => set('dockerfilePath', e.target.value || '/Dockerfile')}
                 />
-                <p className="text-muted-foreground text-[11px]">
+                <p className="text-muted-foreground text-sm">
                   Resolved with base directory (e.g. <code>/docker/Dockerfile.worker</code>).
                 </p>
               </Field>
@@ -485,7 +483,7 @@ export function ConfigurationSection({
                 onChange={(e) => set('ports', e.target.value || null)}
               />
             </Field>
-          </div>
+          </>
           <Field
             label="Watch paths"
             tooltip="Optional glob patterns (one per line). Auto-deploy from GitHub only runs when a push changes files matching these paths. Leave empty to deploy on every push to the branch."
@@ -503,11 +501,12 @@ export function ConfigurationSection({
             checked={settingVal('disableBuildCache', false)}
             onCheckedChange={(c) => set('disableBuildCache', c)}
           />
-        </Panel>
+        </FormSection>
+        </div>
       )}
 
       {isDockerfilePack && (
-        <Panel title="dockerfile" contentClassName="space-y-3 p-4" footer={saveFooter}>
+        <FormSection title="Dockerfile" footer={saveFooter}>
           <Field label="Inline Dockerfile content">
             <Textarea
               className="font-mono min-h-32"
@@ -516,11 +515,11 @@ export function ConfigurationSection({
               onChange={(e) => set('dockerfileContent', e.target.value || null)}
             />
           </Field>
-        </Panel>
+        </FormSection>
       )}
 
       {svc.kind === 'DOCKER_IMAGE' && (
-        <Panel title="docker registry" contentClassName="grid gap-3 p-4 md:grid-cols-2" footer={saveFooter}>
+        <FormSection title="Docker registry" footer={saveFooter}>
             <Field label="Image">
               <Input value={val('dockerRegistryImage', '')} onChange={(e) => set('dockerRegistryImage', e.target.value)} />
             </Field>
@@ -537,17 +536,18 @@ export function ConfigurationSection({
                 onChange={(e) => set('ports', e.target.value || null)}
               />
             </Field>
-          </Panel>
+          </FormSection>
       )}
 
       {svc.kind === 'COMPOSE' && (
-        <Panel title="compose" contentClassName="p-4" footer={saveFooter}>
+        <FormSection title="Compose" footer={saveFooter}>
             <Textarea
               className="font-mono min-h-64"
+              aria-label="Compose file"
               value={val('dockerComposeRaw', '')}
               onChange={(e) => set('dockerComposeRaw', e.target.value)}
             />
-          </Panel>
+          </FormSection>
       )}
 
       {(svc.kind === 'DATABASE' || svc.kind === 'COMPOSE') && (
@@ -555,7 +555,7 @@ export function ConfigurationSection({
       )}
 
       {svc.kind === 'DATABASE' && (
-        <Panel title="public access" contentClassName="space-y-3 p-4" footer={saveFooter}>
+        <FormSection title="Public access" footer={saveFooter}>
             <ToggleField
               label="Publicly accessible"
               tooltip="Publish the database port on the host so clients can connect from outside the Docker network. Prefer keeping this off and using private networking when possible."
@@ -569,18 +569,20 @@ export function ConfigurationSection({
                 onChange={(e) => set('databasePublicPort', e.target.value ? Number(e.target.value) : null)}
               />
             </Field>
-          </Panel>
+          </FormSection>
       )}
 
       {svc.kind !== 'COMPOSE' && (
-      <Panel id="healthcheck" title="healthcheck" contentClassName="space-y-4 p-4" footer={saveFooter}>
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-muted-foreground min-w-0 flex-1 text-[12px]">
-            {isDb
-              ? 'Docker probe timing for the database container (the probe command is engine-specific).'
-              : "Define how your container's health should be checked (Docker HEALTHCHECK on the running container)."}
-          </p>
-          <div className="w-full max-w-[220px] shrink-0">
+      <div id="healthcheck">
+      <FormSection
+        title="Healthcheck"
+        description={
+          isDb
+            ? 'Docker probe timing for the database container (the probe command is engine-specific).'
+            : "Define how your container's health should be checked (Docker HEALTHCHECK on the running container)."
+        }
+        footer={saveFooter}
+      >
             <ToggleField
               label="Enabled"
               tooltip={
@@ -591,10 +593,8 @@ export function ConfigurationSection({
               checked={val('healthCheckEnabled', false)}
               onCheckedChange={(c) => set('healthCheckEnabled', c)}
             />
-          </div>
-        </div>
         {hasHttpSurface && (
-        <div className="grid gap-3 md:grid-cols-5">
+        <>
           <Field label="Method">
             <SearchableSelect
               value={val('healthCheckMethod', 'GET')}
@@ -623,7 +623,7 @@ export function ConfigurationSection({
           </Field>
           <Field label="Port">
             <Input
-              placeholder="defaults to first exposed port"
+              placeholder="Defaults to first exposed port"
               value={val('healthCheckPort', '') ?? ''}
               onChange={(e) => set('healthCheckPort', e.target.value || null)}
             />
@@ -635,10 +635,10 @@ export function ConfigurationSection({
               onChange={(e) => set('healthCheckPath', e.target.value || null)}
             />
           </Field>
-        </div>
+        </>
         )}
         {hasHttpSurface && (
-        <div className="grid gap-3 md:grid-cols-2">
+        <>
           <Field label="Return code">
             <Input
               type="number"
@@ -653,9 +653,9 @@ export function ConfigurationSection({
               onChange={(e) => set('healthCheckResponseText', e.target.value || null)}
             />
           </Field>
-        </div>
+        </>
         )}
-        <div className="grid gap-3 md:grid-cols-4">
+        <>
           <Field label="Interval (s)">
             <Input
               type="number"
@@ -684,11 +684,13 @@ export function ConfigurationSection({
               onChange={(e) => set('healthCheckStartPeriod', Number(e.target.value) || 5)}
             />
           </Field>
-        </div>
-      </Panel>
+        </>
+      </FormSection>
+      </div>
       )}
 
-      <Panel id="advanced" title="advanced" contentClassName="space-y-3 p-4" footer={saveFooter}>
+      <div id="advanced">
+      <FormSection title="Advanced" footer={saveFooter}>
         {isGit && (
           <PreviewDnsGuide
             serverIp={svc.server?.ip}
@@ -700,7 +702,7 @@ export function ConfigurationSection({
             }
           />
         )}
-        <div className="grid gap-3 md:grid-cols-2">
+        <>
           {isGit && (
             <>
               <ToggleField
@@ -729,7 +731,7 @@ export function ConfigurationSection({
               />
             </>
           )}
-        </div>
+        </>
         {svc.kind === 'COMPOSE' && (
           <ToggleField
             label="Raw compose deployment"
@@ -747,7 +749,7 @@ export function ConfigurationSection({
           />
         )}
         {!isDb && (
-        <div className="grid gap-3 md:grid-cols-2">
+        <>
           <Field
             label="Pre-deploy command"
             tooltip="Shell command run on the server after the image is built and before docker compose up (e.g. cache warm or migrate prep). Leave empty to skip."
@@ -766,7 +768,7 @@ export function ConfigurationSection({
               onChange={(e) => set('postDeployCommand', e.target.value || null)}
             />
           </Field>
-        </div>
+        </>
         )}
         <Field
           label="Custom Docker options"
@@ -791,9 +793,11 @@ export function ConfigurationSection({
           />
         </Field>
         )}
-      </Panel>
+      </FormSection>
+      </div>
 
-      <Panel id="resource-limits" title="resource limits" contentClassName="grid gap-3 p-4 md:grid-cols-2" footer={saveFooter}>
+      <div id="resource-limits">
+      <FormSection title="Resource limits" footer={saveFooter}>
         <Field
           label="CPU limit"
           tooltip="Docker CPU limit for the container (e.g. 0.5 = half a core). Leave empty for no limit. Applied on deploy via compose."
@@ -834,7 +838,7 @@ export function ConfigurationSection({
             onChange={(e) => set('stopGracePeriod', Number(e.target.value || 30))}
           />
         </Field>
-      </Panel>
+      </FormSection>
       </div>
     </div>
   );
@@ -879,10 +883,9 @@ function ServiceConfigPanel({
   return (
     <>
       {data.sections.map((section) => (
-        <Panel
+        <FormSection
           key={section.id}
           title={section.title}
-          contentClassName="space-y-3 p-4"
           footer={
             section.fields.some((f) => !f.readonly) ? (
               <Button size="sm" onClick={() => saveMut.mutate()} disabled={!dirty || saveMut.isPending}>
@@ -891,17 +894,15 @@ function ServiceConfigPanel({
             ) : undefined
           }
         >
-          <div className="grid gap-3 md:grid-cols-2">
-            {section.fields.map((field) => (
-              <ConfigFieldInput
-                key={field.key}
-                field={field}
-                value={form[field.key] ?? data.values[field.key] ?? ''}
-                onChange={(v) => setForm((f) => ({ ...f, [field.key]: v }))}
-              />
-            ))}
-          </div>
-        </Panel>
+          {section.fields.map((field) => (
+            <ConfigFieldInput
+              key={field.key}
+              field={field}
+              value={form[field.key] ?? data.values[field.key] ?? ''}
+              onChange={(v) => setForm((f) => ({ ...f, [field.key]: v }))}
+            />
+          ))}
+        </FormSection>
       ))}
     </>
   );
@@ -920,11 +921,15 @@ function ConfigFieldInput({
   const masked = field.isPassword && !revealed;
 
   return (
-    <div className={`space-y-1.5 ${field.readonly ? 'md:col-span-2' : ''}`}>
-      <Label>
-        {field.label}
-        {field.required && !field.readonly && <span className="text-destructive"> *</span>}
-      </Label>
+    <FormField
+      label={
+        <>
+          {field.label}
+          {field.required && !field.readonly && <span className="text-destructive"> *</span>}
+        </>
+      }
+      description={field.helper}
+    >
       <div className="flex min-w-0 items-center gap-1.5">
         <Input
           className="min-w-0 flex-1 font-mono"
@@ -934,15 +939,16 @@ function ConfigFieldInput({
           onChange={(e) => onChange(e.target.value)}
         />
         {field.isPassword && (
-          <Button variant="ghost" size="sm" className="shrink-0 px-2" onClick={() => setRevealed(!revealed)}>
+          <Button variant="ghost" size="icon" className="shrink-0" aria-label={revealed ? 'Hide' : 'Reveal'} onClick={() => setRevealed(!revealed)}>
             {revealed ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
           </Button>
         )}
         {field.readonly && (
           <Button
             variant="ghost"
-            size="sm"
-            className="shrink-0 px-2"
+            size="icon"
+            className="shrink-0"
+            aria-label="Copy"
             onClick={() => {
               void navigator.clipboard.writeText(value);
               toast.success('Copied');
@@ -952,7 +958,6 @@ function ConfigFieldInput({
           </Button>
         )}
       </div>
-      {field.helper && <p className="text-muted-foreground text-[11px]">{field.helper}</p>}
-    </div>
+    </FormField>
   );
 }
