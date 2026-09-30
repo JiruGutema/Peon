@@ -55,14 +55,12 @@ export default function DashboardPage() {
           icon={FolderKanban}
           href="/projects"
           hint="groups of deployable services"
-          accent={!!projects?.length}
         />
         <StatCard
           label="Services"
           value={totalServices ?? '-'}
           icon={Boxes}
           hint="apps, databases & compose stacks"
-          accent={!!totalServices}
         />
         <StatCard
           label="Servers"
@@ -70,7 +68,6 @@ export default function DashboardPage() {
           icon={Server}
           href="/servers"
           hint="deploy targets"
-          accent={!!servers?.length}
         />
         <StatCard
           label="SSH Keys"

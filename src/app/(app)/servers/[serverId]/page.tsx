@@ -23,7 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { PageContainer, Panel } from '@/components/app/page';
-import { DocCallout } from '@/components/app/doc-callout';
+import { Callout } from '@/components/app/callout';
 import { StatusBadge } from '@/components/app/status-badge';
 import {
   Modal,
@@ -849,7 +849,7 @@ function DestinationsTab({
 
   return (
     <div className="space-y-4">
-      <DocCallout title="What is a destination?">
+      <Callout title="What is a destination?">
         <p>
           A destination is a Docker network on this server where your apps are
           deployed. The server is the machine; the destination is which network
@@ -880,7 +880,7 @@ function DestinationsTab({
             containers on the same server.
           </p>
         </div>
-      </DocCallout>
+      </Callout>
 
       <Panel
         title="add destination"

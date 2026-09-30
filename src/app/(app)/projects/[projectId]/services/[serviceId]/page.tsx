@@ -42,7 +42,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { SearchableSelect } from '@/components/ui/searchable-select';
-import { DocCallout, DocBullets } from '@/components/app/doc-callout';
+import { Callout, CalloutBullets } from '@/components/app/callout';
 import {
   updateService,
   deleteService,
@@ -1643,8 +1643,8 @@ function DnsGuide({ serverIp, domain }: { serverIp?: string | null; domain?: str
         </div>
       </div>
 
-      <DocCallout title="Need help pointing your domain?">
-        <DocBullets>
+      <Callout title="Need help pointing your domain?">
+        <CalloutBullets>
           <li>
             The value must be the public IP of the server this service is deployed to
             {serverIp ? '' : ' — assign a server first to see it here'}.
@@ -1662,7 +1662,7 @@ function DnsGuide({ serverIp, domain }: { serverIp?: string | null; domain?: str
             HTTPS is automatic — a Let&apos;s Encrypt certificate is issued on the first request once
             DNS resolves. Propagation usually takes a few minutes.
           </li>
-        </DocBullets>
+        </CalloutBullets>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="shrink-0">Verify:</span>
           <button
@@ -1676,7 +1676,7 @@ function DnsGuide({ serverIp, domain }: { serverIp?: string | null; domain?: str
           </button>
           <span className="break-all">should print {ip}</span>
         </div>
-      </DocCallout>
+      </Callout>
     </div>
   );
 }
@@ -1703,7 +1703,7 @@ function PreviewDnsGuide({
   };
 
   return (
-    <DocCallout title="DNS setup for preview deployments (server wildcard)">
+    <Callout title="DNS setup for preview deployments (server wildcard)">
       <p>
         Previews use your <b>server wildcard domain</b>: each PR commit gets{' '}
         <span className="text-foreground font-mono">{exampleFqdn}</span>. Point a wildcard A record
@@ -1739,7 +1739,7 @@ function PreviewDnsGuide({
           </tbody>
         </table>
       </div>
-      <DocBullets>
+      <CalloutBullets>
         <li>
           Set the same base on the server under <b>Wildcard domain</b> (e.g.{' '}
           <span className="font-mono">https://{host}</span>).
@@ -1753,13 +1753,13 @@ function PreviewDnsGuide({
           HTTP-01 works.
         </li>
         <li>Preview containers run alongside production — they never replace it.</li>
-      </DocBullets>
+      </CalloutBullets>
       {!wildcardDomain && (
         <p className="text-warning mt-2 text-[12px]">
           This server has no wildcard domain yet — set one before enabling preview deployments.
         </p>
       )}
-    </DocCallout>
+    </Callout>
   );
 }
 
@@ -3531,7 +3531,7 @@ function WebhooksTab({
 
   return (
     <div className="space-y-4">
-      <DocCallout title="Independent deploy webhooks" defaultOpen>
+      <Callout title="Independent deploy webhooks" defaultOpen>
         <p>
           These are standalone URLs for this service only. Create one, copy the URL, and call it from
           GitHub, GitLab, CI, or any HTTP client. A matching push queues a deployment
@@ -3543,7 +3543,7 @@ function WebhooksTab({
           ) : null}
           .
         </p>
-        <DocBullets>
+        <CalloutBullets>
           <li>
             <b>Generic</b> — <span className="font-mono">POST</span> JSON to the URL. The path token
             authenticates the request. Include <span className="font-mono">ref</span> /{' '}
@@ -3565,8 +3565,8 @@ function WebhooksTab({
             Auto-deploy must be enabled on the service. GitHub ping events are acknowledged without
             deploying.
           </li>
-        </DocBullets>
-      </DocCallout>
+        </CalloutBullets>
+      </Callout>
 
       <Panel
         title="deploy webhooks"

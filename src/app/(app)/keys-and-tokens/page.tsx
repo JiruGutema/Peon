@@ -27,7 +27,7 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import { PageContainer, Panel } from '@/components/app/page';
-import { DocCallout, DocBullets } from '@/components/app/doc-callout';
+import { Callout, CalloutBullets } from '@/components/app/callout';
 import { EmptyState } from '@/components/app/empty-state';
 import { useAuthStore } from '@/store/auth';
 import {
@@ -416,7 +416,7 @@ function McpGuide() {
 }`;
 
   return (
-    <DocCallout title="How do I connect an MCP client?">
+    <Callout title="How do I connect an MCP client?">
       <p>
         API tokens also authenticate the hosted MCP server, so AI agents (Cursor, Claude, etc.) can
         manage projects and services, deploy and roll back, operate servers, manage env/volumes/tasks/backups,
@@ -442,13 +442,13 @@ function McpGuide() {
       <pre className="bg-secondary text-foreground max-w-full overflow-x-hidden rounded p-3 font-mono text-xs leading-relaxed break-all whitespace-pre-wrap">
         {config}
       </pre>
-      <DocBullets>
+      <CalloutBullets>
         <li>
           The token is scoped to this workspace and inherits your role — members can only reach
           projects they were added to, and infrastructure tools require owner/admin.
         </li>
-      </DocBullets>
-    </DocCallout>
+      </CalloutBullets>
+    </Callout>
   );
 }
 

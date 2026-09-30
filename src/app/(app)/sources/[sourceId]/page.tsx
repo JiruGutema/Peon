@@ -27,7 +27,7 @@ import { publicEnv } from '@/lib/env';
 import { githubInstallationSettingsUrl } from '@/lib/github-urls';
 import { githubAppEventsWebhookUrl, githubAppSetupUrl } from '@/lib/webhooks/github';
 import { Boxes, CheckCircle2, Copy, ExternalLink } from 'lucide-react';
-import { DocCallout, DocSteps } from '@/components/app/doc-callout';
+import { Callout, CalloutSteps } from '@/components/app/callout';
 
 const TABS_LIST_CLASS =
   'h-auto w-full justify-start gap-5 rounded-none border-b bg-transparent p-0';
@@ -375,8 +375,8 @@ function GithubAppSetupDocs({
 
   return (
     <div className="space-y-4">
-      <DocCallout title="How to finish GitHub App setup">
-        <DocSteps>
+      <Callout title="How to finish GitHub App setup">
+        <CalloutSteps>
           <li>
             Open your App → <b>General</b>. Set Homepage URL to{' '}
             <span className="text-foreground font-mono">{publicEnv.appUrl}</span>.
@@ -411,8 +411,8 @@ function GithubAppSetupDocs({
             Link services with Git source type <b>GitHub App</b> and this source. Pushes to the tracked
             branch will queue deploys with <span className="font-mono">triggeredBy: webhook</span>.
           </li>
-        </DocSteps>
-      </DocCallout>
+        </CalloutSteps>
+      </Callout>
 
       <Panel title="GitHub App setup" contentClassName="space-y-5 p-4">
         <p className="text-muted-foreground text-[12.5px]">
