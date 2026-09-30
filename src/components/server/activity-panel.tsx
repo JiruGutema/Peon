@@ -51,29 +51,30 @@ export function ServerActivityPanel({ serverId }: { serverId: string }) {
   return (
     <aside className="flex min-h-0 w-full flex-col xl:sticky xl:top-0 xl:self-start">
       <Panel
-        title="activity"
+        title="Activity"
+        padded={false}
         className="flex h-[min(70vh,calc(100svh-8rem))] min-h-0 flex-col xl:h-[calc(100svh-3rem-3rem)]"
-        contentClassName="flex min-h-0 flex-1 flex-col overflow-hidden p-0"
+        contentClassName="flex min-h-0 flex-1 flex-col overflow-hidden"
       >
         <div className="shrink-0 border-b px-4 py-2.5">
-          <div className="font-heading text-[13px] font-bold">
+          <div className="text-base font-medium">
             {latest ? operationTitle(latest.operation) : "No operation yet"}
           </div>
           {runStartedAt ? (
-            <div className="mt-0.5 text-[11px] text-muted-foreground">
+            <div className="text-muted-foreground mt-0.5 text-sm">
               Latest run started{" "}
               <LocalDateTime value={runStartedAt} style="time" />
-              <span className="text-muted-foreground/70"> · newest first</span>
+              <span> · newest first</span>
             </div>
           ) : null}
         </div>
         <div
           ref={scrollRef}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-background/40 p-4"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4"
         >
           {isLoading ? (
-            <p className="text-[12px] text-muted-foreground">
-              loading activity…
+            <p className="text-muted-foreground text-sm">
+              Loading activity…
             </p>
           ) : ordered.length ? (
             <div className="space-y-3">
@@ -86,7 +87,7 @@ export function ServerActivityPanel({ serverId }: { serverId: string }) {
               ))}
             </div>
           ) : (
-            <p className="text-[12px] text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Connect to server or manage the gateway to see the latest run
               here.
             </p>
@@ -143,21 +144,21 @@ function StepLine({
         {state === "error" ? (
           <X className="size-4 text-destructive" />
         ) : state === "running" ? (
-          <LoaderCircle className="size-4 animate-spin text-phosphor" />
+          <LoaderCircle className="size-4 text-muted-foreground animate-spin" />
         ) : (
-          <Check className="size-4 text-phosphor" />
+          <Check className="text-success size-4" />
         )}
       </span>
       <div className="min-w-0">
         <div
           className={cn(
-            "text-[12.5px] leading-5",
+            "font-mono text-sm leading-5 break-words",
             state === "error" ? "text-destructive" : "text-foreground"
           )}
         >
           {log.message}
         </div>
-        <div className="mt-0.5 text-[10px] text-muted-foreground">
+        <div className="text-muted-foreground mt-0.5 font-mono text-xs">
           <LocalDateTime value={log.createdAt} style="time" />
         </div>
       </div>

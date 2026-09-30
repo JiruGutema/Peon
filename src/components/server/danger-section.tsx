@@ -65,9 +65,10 @@ export function DangerSection({ server }: { server: ServerDetail }) {
 
   return (
     <Panel
-      title={<span className="text-destructive">delete server</span>}
+      title="Danger zone"
+      description="Irreversible actions for this server."
       className="border-destructive/40"
-      contentClassName="space-y-4 p-4"
+      contentClassName="space-y-3"
       footer={
         <Modal
           onOpenChange={(open) => {
@@ -78,7 +79,7 @@ export function DangerSection({ server }: { server: ServerDetail }) {
           }}
         >
           <ModalTrigger asChild>
-            <Button size="sm" variant="destructive">
+            <Button variant="destructive">
               <Trash2 className="size-4" /> Delete server
             </Button>
           </ModalTrigger>
@@ -102,7 +103,7 @@ export function DangerSection({ server }: { server: ServerDetail }) {
                 />
               </div>
               {resourceCount > 0 ? (
-                <label className="flex items-start gap-2 text-sm">
+                <label className="flex items-start gap-2 text-base">
                   <Checkbox
                     checked={deleteResources}
                     onCheckedChange={(v) => setDeleteResources(v === true)}
@@ -110,7 +111,7 @@ export function DangerSection({ server }: { server: ServerDetail }) {
                   />
                   <span>
                     Delete all resources ({resourceCount} total)
-                    <span className="mt-0.5 block text-[12px] text-muted-foreground">
+                    <span className="mt-0.5 block text-sm text-muted-foreground">
                       Stops containers on the host and deletes those services
                       from Peon. Without this, the server cannot be deleted.
                     </span>
@@ -137,7 +138,7 @@ export function DangerSection({ server }: { server: ServerDetail }) {
         </Modal>
       }
     >
-      <p className="text-sm text-muted-foreground">
+      <p className="text-base text-muted-foreground">
         Permanently remove this server from Peon
         {resourceCount > 0
           ? `, including the option to delete its ${resourceCount} service${resourceCount === 1 ? "" : "s"} and stop their containers`
@@ -145,13 +146,13 @@ export function DangerSection({ server }: { server: ServerDetail }) {
         . This does not destroy the remote machine itself.
       </p>
       {resourceCount > 0 ? (
-        <p className="text-[12.5px] text-amber-600 dark:text-amber-400">
+        <p className="text-warning text-base">
           This server has {resourceCount} resource
           {resourceCount === 1 ? "" : "s"}. You must confirm deleting them in
           the dialog before the server can be removed.
         </p>
       ) : (
-        <p className="text-[12.5px] text-muted-foreground">
+        <p className="text-muted-foreground text-base">
           No services are placed on this server, so it can be deleted after name
           confirmation.
         </p>

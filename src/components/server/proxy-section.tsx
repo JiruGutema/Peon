@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Panel } from "@/components/app/page"
+import { FormField, FormSection } from "@/components/app/page"
 import { StatusBadge } from "@/components/app/status-badge"
 import { proxyAction, type ServerDetail } from "@/services/api/server"
 
@@ -39,80 +39,75 @@ export function ProxySection({
   const isOn = server.proxyStatus === "running"
 
   return (
-    <div className="space-y-4">
-      <Panel
-        title="traffic gateway"
-        contentClassName="space-y-4 p-4"
-        footer={
-          server.proxyType !== "NONE" ? (
-            <>
-              <Button
-                size="sm"
-                onClick={() => actionMut.mutate("start")}
-                disabled={actionMut.isPending || isOn}
-              >
-                Turn on
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => actionMut.mutate("restart")}
-                disabled={actionMut.isPending || !isOn}
-              >
-                Reload
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => actionMut.mutate("stop")}
-                disabled={actionMut.isPending || !isOn}
-              >
-                Turn off
-              </Button>
-            </>
-          ) : undefined
-        }
-      >
-        <p className="text-[12px] leading-relaxed text-muted-foreground">
-          {gatewayName
-            ? `The gateway (${gatewayName}) receives public HTTPS traffic and routes each domain to the right app container. Peon installs and manages it on this server.`
-            : "No gateway is configured for this server. Change Gateway type under General if you want public HTTPS routing."}
-        </p>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[12px] text-muted-foreground">Status</span>
+    <FormSection
+      title="Traffic gateway"
+      description={
+        gatewayName
+          ? `The gateway (${gatewayName}) receives public HTTPS traffic and routes each domain to the right app container. Peon installs and manages it on this server.`
+          : "No gateway is configured for this server. Change Gateway type under General if you want public HTTPS routing."
+      }
+      footer={
+        server.proxyType !== "NONE" ? (
+          <>
+            <Button
+              onClick={() => actionMut.mutate("start")}
+              disabled={actionMut.isPending || isOn}
+            >
+              Turn on
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => actionMut.mutate("restart")}
+              disabled={actionMut.isPending || !isOn}
+            >
+              Reload
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => actionMut.mutate("stop")}
+              disabled={actionMut.isPending || !isOn}
+            >
+              Turn off
+            </Button>
+          </>
+        ) : undefined
+      }
+    >
+      <FormField label="Status">
+        <span className="flex flex-wrap items-center gap-2">
           <StatusBadge
             status={
               isOn
-                ? "on"
+                ? "On"
                 : server.proxyStatus === "exited"
-                  ? "off"
-                  : server.proxyStatus
+                  ? "Off"
+                  : server.proxyStatus.charAt(0).toUpperCase() +
+                    server.proxyStatus.slice(1)
             }
             tone={isOn ? "success" : "muted"}
           />
           {gatewayName ? (
-            <span className="text-[11px] text-muted-foreground">
-              {gatewayName}
-            </span>
+            <span className="text-muted-foreground text-sm">{gatewayName}</span>
           ) : null}
+        </span>
+      </FormField>
+      <FormField label="Actions">
+        <div className="text-muted-foreground space-y-1 text-sm">
+          <p>
+            <span className="text-foreground font-medium">Turn on</span>{" "}
+            installs and starts the gateway so domains can reach your apps.
+          </p>
+          <p>
+            <span className="text-foreground font-medium">Reload</span>{" "}
+            restarts the gateway with the current config (a brief blip is
+            possible).
+          </p>
+          <p>
+            <span className="text-foreground font-medium">Turn off</span> stops
+            public routing on this server (apps keep running locally).
+          </p>
         </div>
-
-        <div className="space-y-1 text-[11px] text-muted-foreground">
-          <p>
-            <span className="font-medium text-foreground/80">Turn on</span> —
-            install/start the gateway so domains can reach your apps.
-          </p>
-          <p>
-            <span className="font-medium text-foreground/80">Reload</span> —
-            restart the gateway with the current config (brief blip possible).
-          </p>
-          <p>
-            <span className="font-medium text-foreground/80">Turn off</span> —
-            stop public routing on this server (apps keep running locally).
-          </p>
-        </div>
-      </Panel>
-    </div>
+      </FormField>
+    </FormSection>
   )
 }

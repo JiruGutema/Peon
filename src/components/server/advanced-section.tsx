@@ -5,8 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Panel } from "@/components/app/page"
+import { FormField, FormSection } from "@/components/app/page"
 import { ConfirmButton } from "@/components/app/confirm"
 import {
   cleanupServer,
@@ -76,22 +75,14 @@ export function AdvancedSection({
   const savedNetworks = server.settings?.deleteUnusedNetworks ?? false
 
   const saveFooter = (
-    <Button
-      size="sm"
-      onClick={() => saveMut.mutate()}
-      disabled={saveMut.isPending}
-    >
+    <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending}>
       Save advanced settings
     </Button>
   )
 
   return (
     <div className="space-y-6">
-      <Panel
-        title="build and deployment limits"
-        contentClassName="grid gap-4 p-4 sm:grid-cols-2"
-        footer={saveFooter}
-      >
+      <FormSection title="Build and deployment limits" footer={saveFooter}>
         <NumberField
           label="Concurrent builds"
           value={concurrentBuilds}
@@ -102,11 +93,10 @@ export function AdvancedSection({
           value={deploymentQueueLimit}
           onChange={setDeploymentQueueLimit}
         />
-      </Panel>
+      </FormSection>
 
-      <Panel
-        title="docker cleanup"
-        contentClassName="space-y-4 p-4"
+      <FormSection
+        title="Docker cleanup"
         footer={
           <>
             <ConfirmButton
@@ -128,7 +118,7 @@ export function AdvancedSection({
               confirmLabel="Trigger cleanup"
               variant="outline"
               confirmVariant="default"
-              size="sm"
+              size="default"
               disabled={cleanupMut.isPending}
               onConfirm={() => cleanupMut.mutate()}
             >
@@ -143,44 +133,35 @@ export function AdvancedSection({
           description="When enabled, scheduled cleanups always prune unused images, builders, and containers. When disabled, cleanup only runs if disk usage meets the threshold below."
           checked={forceDockerCleanup}
           onCheckedChange={setForceDockerCleanup}
-          compact
         />
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="space-y-2">
-            <Label htmlFor="cleanup-frequency">Cleanup cron</Label>
-            <Input
-              id="cleanup-frequency"
-              value={dockerCleanupFrequency}
-              onChange={(e) => setDockerCleanupFrequency(e.target.value)}
-            />
-          </div>
-          {!forceDockerCleanup ? (
-            <NumberField
-              label="Cleanup threshold (%)"
-              value={dockerCleanupThreshold}
-              onChange={setDockerCleanupThreshold}
-            />
-          ) : (
-            <div />
-          )}
-          <div className="space-y-3 pt-6">
-            <ToggleRow
-              label="Delete unused volumes"
-              description="Permanently removes volumes not attached to running containers. Data from stopped containers can be lost."
-              checked={deleteUnusedVolumes}
-              onCheckedChange={setDeleteUnusedVolumes}
-              compact
-            />
-            <ToggleRow
-              label="Delete unused networks"
-              description="Removes networks not attached to running containers. Can break connectivity for stopped workloads."
-              checked={deleteUnusedNetworks}
-              onCheckedChange={setDeleteUnusedNetworks}
-              compact
-            />
-          </div>
-        </div>
-      </Panel>
+        <FormField label="Cleanup cron" htmlFor="cleanup-frequency">
+          <Input
+            id="cleanup-frequency"
+            className="font-mono"
+            value={dockerCleanupFrequency}
+            onChange={(e) => setDockerCleanupFrequency(e.target.value)}
+          />
+        </FormField>
+        {!forceDockerCleanup ? (
+          <NumberField
+            label="Cleanup threshold (%)"
+            value={dockerCleanupThreshold}
+            onChange={setDockerCleanupThreshold}
+          />
+        ) : null}
+        <ToggleRow
+          label="Delete unused volumes"
+          description="Permanently removes volumes not attached to running containers. Data from stopped containers can be lost."
+          checked={deleteUnusedVolumes}
+          onCheckedChange={setDeleteUnusedVolumes}
+        />
+        <ToggleRow
+          label="Delete unused networks"
+          description="Removes networks not attached to running containers. Can break connectivity for stopped workloads."
+          checked={deleteUnusedNetworks}
+          onCheckedChange={setDeleteUnusedNetworks}
+        />
+      </FormSection>
     </div>
   )
 }

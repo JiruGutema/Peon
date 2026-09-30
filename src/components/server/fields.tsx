@@ -1,79 +1,19 @@
-"use client"
+'use client';
 
-import { ChevronRight, Terminal } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { cn } from "@/lib/utils"
-
-export function MetricCard({
-  label,
-  value,
-  detail,
-  pct,
-  invert,
-}: {
-  label: string
-  value: string
-  detail: string
-  pct: number
-  /** When true, higher free % is good (green bias). */
-  invert?: boolean
-}) {
-  const tone = invert
-    ? pct < 15
-      ? "bg-destructive"
-      : pct < 30
-        ? "bg-amber-500"
-        : "bg-phosphor"
-    : pct >= 90
-      ? "bg-destructive"
-      : pct >= 75
-        ? "bg-amber-500"
-        : "bg-phosphor"
-
-  return (
-    <div className="rounded-lg border border-border/80 bg-card px-3 py-3">
-      <div className="text-[10px] tracking-wide text-muted-foreground uppercase">
-        {label}
-      </div>
-      <div className="mt-1 text-[18px] font-semibold tracking-tight">
-        {value}
-      </div>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-        <div
-          className={cn("h-full rounded-full transition-all", tone)}
-          style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
-        />
-      </div>
-      <div className="mt-1.5 text-[10px] text-muted-foreground">{detail}</div>
-    </div>
-  )
-}
+import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { FormField } from '@/components/app/page';
+import { cn } from '@/lib/utils';
 
 const CONNECTION_TONE = {
-  success: {
-    card: "border-success/25 bg-success/5",
-    icon: "bg-success/15 text-success",
-    label: "text-success",
-  },
-  warning: {
-    card: "border-warning/25 bg-warning/5",
-    icon: "bg-warning/15 text-warning",
-    label: "text-warning",
-  },
-  destructive: {
-    card: "border-destructive/25 bg-destructive/5",
-    icon: "bg-destructive/15 text-destructive",
-    label: "text-destructive",
-  },
-  muted: {
-    card: "border-border/70 bg-secondary/40",
-    icon: "bg-muted text-muted-foreground",
-    label: "text-muted-foreground",
-  },
-} as const
+  success: 'text-success',
+  warning: 'text-warning',
+  destructive: 'text-destructive',
+  muted: 'text-muted-foreground',
+} as const;
 
+/** One step of the SSH → setup → agent chain. Only the icon and status carry the tone. */
 export function ConnectionStep({
   icon: Icon,
   label,
@@ -81,109 +21,67 @@ export function ConnectionStep({
   about,
   tone,
 }: {
-  icon: typeof Terminal
-  label: string
-  status: string
-  about: string
-  tone: keyof typeof CONNECTION_TONE
+  icon: LucideIcon;
+  label: string;
+  status: string;
+  about: string;
+  tone: keyof typeof CONNECTION_TONE;
 }) {
-  const styles = CONNECTION_TONE[tone]
   return (
-    <div
-      className={cn(
-        "flex min-w-0 flex-1 items-start gap-2.5 rounded-md border px-2.5 py-2",
-        styles.card
-      )}
-    >
-      <span
-        className={cn(
-          "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md",
-          styles.icon
-        )}
-      >
-        <Icon className="size-3.5" />
-      </span>
+    <div className="border-border flex min-w-0 flex-1 items-start gap-2.5 rounded-md border px-3 py-2.5">
+      <Icon className={cn('mt-0.5 size-4 shrink-0', CONNECTION_TONE[tone])} />
       <div className="min-w-0">
-        <div className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-          {label}
-        </div>
-        <div
-          className={cn(
-            "text-[12.5px] leading-tight font-semibold",
-            styles.label
-          )}
-        >
-          {status}
-        </div>
-        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
-          {about}
-        </p>
+        <div className="text-muted-foreground text-sm">{label}</div>
+        <div className={cn('text-base font-medium', CONNECTION_TONE[tone])}>{status}</div>
+        <p className="text-muted-foreground mt-0.5 text-sm">{about}</p>
       </div>
     </div>
-  )
+  );
 }
 
 export function ConnectionStepConnector() {
   return (
-    <div
-      className="hidden shrink-0 items-center text-muted-foreground/40 sm:flex"
-      aria-hidden
-    >
+    <div className="text-muted-foreground hidden shrink-0 items-center sm:flex" aria-hidden>
       <ChevronRight className="size-4" />
     </div>
-  )
+  );
 }
 
+/** A FormField row whose control is a switch. */
 export function ToggleRow({
   label,
   description,
   checked,
   onCheckedChange,
-  compact,
 }: {
-  label: string
-  description?: string
-  checked: boolean
-  onCheckedChange: (checked: boolean) => void
-  compact?: boolean
+  label: string;
+  description?: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
 }) {
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between gap-4",
-        compact ? "py-0" : "px-4 py-3"
-      )}
-    >
-      <div className="min-w-0">
-        <div className="text-[12.5px] font-semibold">{label}</div>
-        {description ? (
-          <div className="text-[11px] text-muted-foreground">{description}</div>
-        ) : null}
-      </div>
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
-    </div>
-  )
+    <FormField label={label} description={description}>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={label} />
+    </FormField>
+  );
 }
 
+/** A FormField row with a number input. */
 export function NumberField({
   label,
+  description,
   value,
   onChange,
 }: {
-  label: string
-  value: string
-  onChange: (value: string) => void
+  label: string;
+  description?: string;
+  value: string;
+  onChange: (value: string) => void;
 }) {
-  const id = label.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+  const id = label.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        type="number"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </div>
-  )
+    <FormField label={label} htmlFor={id} description={description}>
+      <Input id={id} type="number" value={value} onChange={(e) => onChange(e.target.value)} />
+    </FormField>
+  );
 }

@@ -4,12 +4,17 @@ import { useState } from "react"
 import Link from "next/link"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Activity, HardDrive, KeyRound, Terminal } from "lucide-react"
+import { Activity, Cpu, HardDrive, MemoryStick, Terminal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { SearchableSelect } from "@/components/ui/searchable-select"
-import { Panel } from "@/components/app/page"
+import {
+  FormField,
+  FormSection,
+  KeyValueList,
+  Panel,
+} from "@/components/app/page"
+import { StatCard } from "@/components/app/stat-card"
 import { LocalDateTime } from "@/components/app/local-datetime"
 import {
   updateServer,
@@ -21,7 +26,6 @@ import { useAuthStore } from "@/store/auth"
 import {
   ConnectionStep,
   ConnectionStepConnector,
-  MetricCard,
 } from "@/components/server/fields"
 
 export function GeneralSection({
@@ -112,56 +116,53 @@ export function GeneralSection({
   const proxySwitchBlocked =
     proxyTypeChanged && server.proxyStatus === "running"
 
+
   return (
-    <div className="space-y-5">
-      <div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            label="CPU"
-            value={cpu != null ? `${Math.round(cpu)}%` : "—"}
-            detail={agentLive ? "from peon-ping-pong" : "waiting for agent"}
-            pct={cpu ?? 0}
-          />
-          <MetricCard
-            label="RAM"
-            value={mem != null ? `${Math.round(mem)}%` : "—"}
-            detail={agentLive ? "from peon-ping-pong" : "waiting for agent"}
-            pct={mem ?? 0}
-          />
-          <MetricCard
-            label="Disk used"
-            value={disk != null ? `${Math.round(disk)}%` : "—"}
-            detail={
-              agentLive
-                ? containerCount != null
-                  ? `${containerCount} containers`
-                  : "from peon-ping-pong"
-                : "waiting for agent"
-            }
-            pct={disk ?? 0}
-          />
-          <MetricCard
-            label="Free space"
-            value={free != null ? `${Math.round(free)}%` : "—"}
-            detail={agentLive ? "root filesystem" : "waiting for agent"}
-            pct={free ?? 0}
-            invert
-          />
-        </div>
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="CPU"
+          icon={Cpu}
+          value={cpu != null ? `${Math.round(cpu)}%` : "—"}
+          hint={agentLive ? "From peon-ping-pong" : "Waiting for agent"}
+        />
+        <StatCard
+          label="RAM"
+          icon={MemoryStick}
+          value={mem != null ? `${Math.round(mem)}%` : "—"}
+          hint={agentLive ? "From peon-ping-pong" : "Waiting for agent"}
+        />
+        <StatCard
+          label="Disk used"
+          icon={HardDrive}
+          value={disk != null ? `${Math.round(disk)}%` : "—"}
+          hint={
+            agentLive
+              ? containerCount != null
+                ? `${containerCount} containers`
+                : "From peon-ping-pong"
+              : "Waiting for agent"
+          }
+        />
+        <StatCard
+          label="Free space"
+          icon={HardDrive}
+          value={free != null ? `${Math.round(free)}%` : "—"}
+          hint={agentLive ? "Root filesystem" : "Waiting for agent"}
+        />
       </div>
 
       <Panel
-        title="connection"
-        contentClassName="space-y-3 p-3"
+        title="Connection"
+        contentClassName="space-y-4"
         footer={
           <div className="flex w-full flex-wrap items-center justify-between gap-2">
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-muted-foreground text-sm">
               {connectMut.isPending
-                ? "Saving & connecting…"
-                : "Saves host settings, then connects · progress in Activity"}
+                ? "Saving and connecting…"
+                : "Saves host settings, then connects. Progress shows in Activity."}
             </span>
             <Button
-              size="sm"
               onClick={() => connectMut.mutate()}
               disabled={connectMut.isPending || !privateKeyId}
             >
@@ -221,53 +222,46 @@ export function GeneralSection({
             }
           />
         </div>
-        <div className="flex items-center gap-2 border-t border-dashed pt-2.5 text-[11px] text-muted-foreground">
-          <Activity className="size-3 shrink-0 opacity-60" />
-          <span>
-            Last heartbeat{" "}
-            <span className="font-medium text-foreground/85 tabular-nums">
-              {server.settings?.agentLastSeenAt ? (
+        <KeyValueList
+          items={[
+            {
+              label: "Last heartbeat",
+              value: server.settings?.agentLastSeenAt ? (
                 <LocalDateTime value={server.settings.agentLastSeenAt} />
               ) : (
                 "—"
-              )}
-            </span>
-          </span>
-        </div>
-        <div className="text-muted-foreground flex flex-wrap items-center gap-2 border-t border-dashed pt-2.5 text-[11px]">
-          <KeyRound className="size-3 shrink-0 opacity-60" />
-          <span className="min-w-0">
-            Trusted host key{' '}
-            {server.hostKeyFingerprint ? (
-              <span className="text-foreground/85 font-mono break-all">
-                {server.hostKeyFingerprint}
-              </span>
-            ) : (
-              <span className="text-foreground/85">
-                not set — recorded on the next connection
-              </span>
-            )}
-          </span>
-          {server.hostKeyFingerprint ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="ml-auto h-6 px-2 text-[11px]"
-              onClick={() => forgetHostKeyMut.mutate()}
-              disabled={forgetHostKeyMut.isPending}
-            >
-              Forget
-            </Button>
-          ) : null}
-        </div>
+              ),
+            },
+            {
+              label: "Trusted host key",
+              value: server.hostKeyFingerprint ? (
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono break-all">
+                    {server.hostKeyFingerprint}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => forgetHostKeyMut.mutate()}
+                    disabled={forgetHostKeyMut.isPending}
+                  >
+                    Forget
+                  </Button>
+                </span>
+              ) : (
+                <span className="text-muted-foreground">
+                  Not set. It is recorded on the next connection.
+                </span>
+              ),
+            },
+          ]}
+        />
       </Panel>
 
-      <Panel
-        title="general"
-        contentClassName="grid gap-4 p-4 sm:grid-cols-2"
+      <FormSection
+        title="General"
         footer={
           <Button
-            size="sm"
             onClick={() => {
               if (proxySwitchBlocked) {
                 toast.error(
@@ -283,52 +277,64 @@ export function GeneralSection({
           </Button>
         }
       >
-        <div className="space-y-2">
-          <Label htmlFor="g-name">Name</Label>
+        <FormField label="Name" htmlFor="g-name">
           <Input
             id="g-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="g-description">Description</Label>
+        </FormField>
+        <FormField label="Description" htmlFor="g-description">
           <Input
             id="g-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="g-user">User</Label>
+        </FormField>
+        <FormField label="User" htmlFor="g-user">
           <Input
             id="g-user"
             value={user}
             onChange={(e) => setUser(e.target.value)}
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="g-ip">IP / Hostname</Label>
+        </FormField>
+        <FormField
+          label="IP or hostname"
+          htmlFor="g-ip"
+          description="IPv4, IPv6, or DNS hostname, passed straight to SSH."
+        >
           <Input
             id="g-ip"
+            className="font-mono"
             value={ip}
             onChange={(e) => setIp(e.target.value)}
             placeholder="203.0.113.10, 2001:db8::1, or host.example.com"
           />
-          <p className="text-[11px] text-muted-foreground">
-            IPv4, IPv6, or DNS hostname — passed straight to SSH.
-          </p>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="g-port">Port</Label>
+        </FormField>
+        <FormField label="Port" htmlFor="g-port">
           <Input
             id="g-port"
             value={port}
             onChange={(e) => setPort(e.target.value)}
           />
-        </div>
-        <div className="space-y-2">
-          <Label>SSH key</Label>
+        </FormField>
+        <FormField
+          label="SSH key"
+          description={
+            !keys?.length ? (
+              <>
+                No SSH keys yet.{" "}
+                <Link
+                  href="/keys-and-tokens"
+                  className="text-primary underline-offset-2 hover:underline"
+                >
+                  Add one under Keys and tokens
+                </Link>
+                .
+              </>
+            ) : undefined
+          }
+        >
           <SearchableSelect
             value={privateKeyId}
             onValueChange={setPrivateKeyId}
@@ -347,38 +353,33 @@ export function GeneralSection({
                 : []),
             ]}
           />
-          {!keys?.length ? (
-            <p className="text-[11px] text-muted-foreground">
-              No SSH keys yet.{" "}
-              <Link
-                href="/keys-and-tokens"
-                className="text-phosphor underline-offset-2 hover:underline"
-              >
-                Add one under Keys & Tokens
-              </Link>
-              .
-            </p>
-          ) : null}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="g-wildcard">Wildcard domain</Label>
+        </FormField>
+        <FormField label="Wildcard domain" htmlFor="g-wildcard">
           <Input
             id="g-wildcard"
             placeholder="https://example.com"
             value={wildcardDomain}
             onChange={(e) => setWildcardDomain(e.target.value)}
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="g-timeout">SSH connection timeout (s)</Label>
+        </FormField>
+        <FormField label="SSH connection timeout (s)" htmlFor="g-timeout">
           <Input
             id="g-timeout"
             value={connectionTimeout}
             onChange={(e) => setConnectionTimeout(e.target.value)}
           />
-        </div>
-        <div className="space-y-2">
-          <Label>Gateway type</Label>
+        </FormField>
+        <FormField
+          label="Gateway type"
+          description={
+            <>
+              Reverse proxy Peon installs on this server to route public HTTPS
+              to your apps. Choose{" "}
+              <span className="text-foreground">None</span> if you only need
+              SSH or private networks.
+            </>
+          }
+        >
           <SearchableSelect
             value={proxyType}
             onValueChange={(v) => setProxyType(v as ServerDetail["proxyType"])}
@@ -389,13 +390,8 @@ export function GeneralSection({
               { value: "NONE", label: "None" },
             ]}
           />
-          <p className="text-[11px] text-muted-foreground">
-            Reverse proxy Peon installs on this server to route public HTTPS to
-            your apps. Choose <span className="text-foreground/80">None</span>{" "}
-            if you only need SSH / private networks.
-          </p>
-        </div>
-      </Panel>
+        </FormField>
+      </FormSection>
     </div>
   )
 }

@@ -3,13 +3,15 @@
 import { useState } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Trash2 } from "lucide-react"
+import { Network, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Panel } from "@/components/app/page"
+import { FormField, FormSection } from "@/components/app/page"
 import { Callout } from "@/components/app/callout"
 import { ConfirmButton } from "@/components/app/confirm"
+import { DataTable } from "@/components/app/data-table"
+import { EmptyState } from "@/components/app/empty-state"
+import { LocalDateTime } from "@/components/app/local-datetime"
 import {
   createDestination,
   deleteDestination,
@@ -47,7 +49,7 @@ export function DestinationsSection({
   })
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Callout title="What is a destination?">
         <p>
           A destination is a Docker network on this server where your apps are
@@ -57,94 +59,107 @@ export function DestinationsSection({
         </p>
         <p>
           Every server starts with a{" "}
-          <span className="font-medium text-foreground">default</span>{" "}
+          <span className="text-foreground font-medium">default</span>{" "}
           destination (network{" "}
-          <span className="font-mono text-[11px] text-foreground">peon</span>).
-          Add another if you need an isolated network for a separate set of
-          services.
+          <span className="text-foreground font-mono">peon</span>). Add another
+          if you need an isolated network for a separate set of services.
         </p>
-        <div className="rounded-md border border-phosphor-dim/60 bg-background/40 px-3 py-2.5">
-          <div className="mb-1 text-[10px] font-medium tracking-wide text-phosphor uppercase">
-            Example
-          </div>
+        <div className="border-border bg-background rounded-md border px-3 py-2.5">
+          <div className="text-foreground mb-1 text-sm font-medium">Example</div>
           <p>
             Deploy your marketing site and API on the{" "}
-            <span className="font-medium text-foreground">default</span>{" "}
+            <span className="text-foreground font-medium">default</span>{" "}
             destination so they share the{" "}
-            <span className="font-mono text-[11px]">peon</span> network with the
-            gateway. Create a second destination named{" "}
-            <span className="font-medium text-foreground">staging</span> with
-            network <span className="font-mono text-[11px]">peon-staging</span>{" "}
-            for preview apps that should stay isolated from production
-            containers on the same server.
+            <span className="font-mono">peon</span> network with the gateway.
+            Create a second destination named{" "}
+            <span className="text-foreground font-medium">staging</span> with
+            network <span className="font-mono">peon-staging</span> for preview
+            apps that should stay isolated from production containers on the
+            same server.
           </p>
         </div>
       </Callout>
 
-      <Panel
-        title="add destination"
-        contentClassName="grid gap-4 p-4 sm:grid-cols-2"
+      <FormSection
+        title="Add destination"
         footer={
           <Button
-            size="sm"
             onClick={() => createMut.mutate()}
             disabled={!name || createMut.isPending}
           >
-            Add
+            Add destination
           </Button>
         }
       >
-        <div className="space-y-2">
-          <Label htmlFor="d-name">Name</Label>
+        <FormField label="Name" htmlFor="d-name">
           <Input
             id="d-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. staging"
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="d-network">Docker network</Label>
+        </FormField>
+        <FormField label="Docker network" htmlFor="d-network">
           <Input
             id="d-network"
+            className="font-mono"
             value={network}
             onChange={(e) => setNetwork(e.target.value)}
             placeholder="peon"
           />
-        </div>
-      </Panel>
+        </FormField>
+      </FormSection>
 
-      {server.destinations.length ? (
-        <Panel title="destinations" contentClassName="divide-y">
-          {server.destinations.map((d) => (
-            <div
-              key={d.id}
-              className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-secondary"
-            >
-              <div>
-                <div className="text-[12.5px] font-semibold">{d.name}</div>
-                <div className="text-[11px] text-muted-foreground">
-                  network: {d.network}
-                </div>
-              </div>
+      <DataTable
+        columns={[
+          {
+            key: "name",
+            header: "Name",
+            cell: (d) => <span className="font-medium">{d.name}</span>,
+          },
+          {
+            key: "network",
+            header: "Network",
+            cell: (d) => <span className="font-mono">{d.network}</span>,
+          },
+          {
+            key: "created",
+            header: "Created",
+            cell: (d) => (
+              <LocalDateTime
+                value={d.createdAt}
+                className="text-muted-foreground"
+              />
+            ),
+          },
+          {
+            key: "actions",
+            header: "",
+            align: "right",
+            cell: (d) => (
               <ConfirmButton
                 title={`Delete destination "${d.name}"?`}
                 description={`Removes this destination (Docker network ${d.network}) from Peon. Services still using it may need to be reassigned.`}
                 confirmLabel="Delete"
-                size="sm"
+                variant="ghost"
                 disabled={deleteMut.isPending}
                 onConfirm={() => deleteMut.mutate(d.id)}
               >
                 <Trash2 className="size-4" /> Delete
               </ConfirmButton>
-            </div>
-          ))}
-        </Panel>
-      ) : (
-        <p className="rounded-lg border border-dashed border-border-bright px-4 py-8 text-center text-[12.5px] text-muted-foreground">
-          No destinations yet.
-        </p>
-      )}
+            ),
+          },
+        ]}
+        rows={server.destinations}
+        rowKey={(d) => d.id}
+        emptyState={
+          <EmptyState
+            icon={Network}
+            title="No destinations yet"
+            description="Add a destination above to deploy services onto another Docker network."
+          />
+        }
+      />
     </div>
   )
 }
