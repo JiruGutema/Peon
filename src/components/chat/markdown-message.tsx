@@ -33,7 +33,7 @@ function Code({
     <span className="bg-muted relative my-3 block overflow-hidden rounded-md border">
       <Button
         type="button"
-        size="icon-xs"
+        size="icon-sm"
         variant="ghost"
         className="absolute top-2 right-2"
         onClick={() => {

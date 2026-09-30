@@ -428,7 +428,7 @@ export default function ProfilePage() {
                       : 'That device will be signed out immediately.'
                   }
                   confirmLabel={session.current ? 'Sign out' : 'Revoke'}
-                  size="xs"
+                  size="sm"
                   onConfirm={() => void handleRevoke(session.id, session.current)}
                 >
                   Revoke
