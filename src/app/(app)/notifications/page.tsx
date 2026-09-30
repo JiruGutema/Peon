@@ -5,11 +5,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PageContainer, Panel } from '@/components/app/page';
+import { FormField, FormSection, PageContainer, PageHeader } from '@/components/app/page';
 import { useAuthStore } from '@/store/auth';
 import {
   listNotifications,
@@ -19,11 +19,6 @@ import {
   type NotificationChannel,
 } from '@/services/api/notifications';
 import { NOTIFICATION_EVENTS } from '@/schemas/notifications.schema';
-
-const TABS_LIST_CLASS =
-  'h-auto w-full justify-start gap-5 overflow-x-auto rounded-none border-b bg-transparent p-0';
-const TABS_TRIGGER_CLASS =
-  'rounded-none border-x-0 border-t-0 border-b-2 border-transparent bg-transparent px-0 pb-2 text-[12.5px] shadow-none data-[state=active]:border-phosphor data-[state=active]:bg-transparent data-[state=active]:text-phosphor data-[state=active]:shadow-none';
 
 const CHANNELS: NotificationChannel[] = [
   'EMAIL',
@@ -62,7 +57,7 @@ const FIELDS: Record<NotificationChannel, FieldDef[]> = {
     {
       key: 'to',
       label: 'Recipient email(s)',
-      hint: 'Comma-separated. Peon sends mail via its own email service — no SMTP setup needed.',
+      hint: 'Comma-separated. Peon sends mail through its own email service, so no SMTP setup is needed.',
     },
   ],
   DISCORD: [
@@ -112,13 +107,14 @@ export default function NotificationsPage() {
 
   return (
     <PageContainer>
+      <PageHeader title="Notifications" description="Where deploy and health alerts go" />
       {isLoading ? (
-        <div className="bg-accent h-64 animate-pulse rounded-lg" />
+        <Skeleton className="h-64 rounded-lg" />
       ) : (
         <Tabs defaultValue="EMAIL">
-          <TabsList className={TABS_LIST_CLASS}>
+          <TabsList variant="line" className="max-w-full overflow-x-auto">
             {CHANNELS.map((c) => (
-              <TabsTrigger key={c} value={c} className={TABS_TRIGGER_CLASS}>
+              <TabsTrigger key={c} value={c}>
                 {CHANNEL_LABELS[c]}
               </TabsTrigger>
             ))}
@@ -202,29 +198,29 @@ function ChannelForm({
   });
 
   return (
-    <Panel
+    <FormSection
       title={CHANNEL_LABELS[channel]}
-      actions={<Switch checked={enabled} onCheckedChange={setEnabled} />}
-      contentClassName="space-y-4 p-4"
       footer={
         <>
-          <Button size="sm" onClick={() => saveMut.mutate()} disabled={saveMut.isPending}>
-            Save
-          </Button>
           <Button
-            size="sm"
             variant="outline"
             onClick={() => testMut.mutate()}
             disabled={testMut.isPending}
           >
             Send test
           </Button>
+          <Button onClick={() => saveMut.mutate()} disabled={saveMut.isPending}>
+            Save
+          </Button>
         </>
       }
     >
+      <FormField label="Enabled" htmlFor={`${channel}-enabled`}>
+        <Switch id={`${channel}-enabled`} checked={enabled} onCheckedChange={setEnabled} />
+      </FormField>
+
       {FIELDS[channel].map((f) => (
-        <div key={f.key} className="space-y-2">
-          <Label htmlFor={`${channel}-${f.key}`}>{f.label}</Label>
+        <FormField key={f.key} label={f.label} htmlFor={`${channel}-${f.key}`} description={f.hint}>
           <Input
             id={`${channel}-${f.key}`}
             type={f.secret ? 'password' : 'text'}
@@ -238,15 +234,13 @@ function ChannelForm({
             value={config[f.key] === '__MASKED__' ? '' : (config[f.key] ?? '')}
             onChange={(e) => setConfig((c) => ({ ...c, [f.key]: e.target.value }))}
           />
-          {f.hint ? <p className="text-muted-foreground text-[11.5px]">{f.hint}</p> : null}
-        </div>
+        </FormField>
       ))}
 
-      <div className="space-y-2">
-        <Label>Events</Label>
+      <FormField label="Events" description="Which events send an alert on this channel.">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {NOTIFICATION_EVENTS.map((ev) => (
-            <label key={ev} className="flex items-center gap-2 text-[12.5px]">
+            <label key={ev} className="flex items-center gap-2 text-base">
               <Checkbox
                 checked={!!events[ev]}
                 onCheckedChange={(v) => setEvents((e) => ({ ...e, [ev]: !!v }))}
@@ -255,7 +249,7 @@ function ChannelForm({
             </label>
           ))}
         </div>
-      </div>
-    </Panel>
+      </FormField>
+    </FormSection>
   );
 }
