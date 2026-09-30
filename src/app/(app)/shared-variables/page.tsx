@@ -185,7 +185,7 @@ export default function SharedVariablesPage() {
 
   return (
     <PageContainer>
-      <PageHeader actions={createDialog} />
+      <PageHeader title="Shared variables" actions={createDialog} />
 
       {isLoading ? (
         <div className="bg-accent h-48 animate-pulse rounded-lg" />
