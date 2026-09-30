@@ -36,7 +36,7 @@ const eslintConfig = defineConfig([
   {
     files: ["src/**/*.{ts,tsx}"],
     plugins: { "design-tokens": { rules: { "no-off-scale-classes": designTokens } } },
-    rules: { "design-tokens/no-off-scale-classes": "warn" },
+    rules: { "design-tokens/no-off-scale-classes": "error" },
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([
