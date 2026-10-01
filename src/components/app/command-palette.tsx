@@ -35,7 +35,7 @@ const COMMANDS = [
   { label: 'Sources', url: '/sources', icon: GitBranch },
   { label: 'Storages', url: '/storages', icon: Database },
   { label: 'Notifications', url: '/notifications', icon: Bell },
-  { label: 'Keys & Tokens', url: '/keys-and-tokens', icon: KeyRound },
+  { label: 'MCP & SSH Keys', url: '/keys-and-tokens', icon: KeyRound },
   { label: 'Shared variables', url: '/shared-variables', icon: Variable },
   { label: 'Settings', url: '/settings/general', icon: Settings },
   { label: 'Members', url: '/settings/members', icon: Users },

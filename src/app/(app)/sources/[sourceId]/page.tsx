@@ -513,7 +513,7 @@ function GithubAppSetupDocs({
                   detail={
                     source.privateKeyId
                       ? 'Linked. Used to mint installation tokens for private clones.'
-                      : 'Missing. Generate a .pem on the app and attach it under Keys and tokens → SSH keys.'
+                      : 'Missing. Generate a .pem on the app and attach it under MCP & SSH keys → SSH keys.'
                   }
                 />
               ),

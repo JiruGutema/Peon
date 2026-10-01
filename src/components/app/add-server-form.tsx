@@ -199,7 +199,7 @@ export function AddServerForm({
             className="text-primary text-sm underline-offset-2 hover:underline"
             onClick={onNavigateAway}
           >
-            Keys &amp; Tokens → SSH Keys
+            MCP &amp; SSH keys → SSH Keys
           </Link>
         </div>
         {(keys?.length ?? 0) > 0 ? (
@@ -220,7 +220,7 @@ export function AddServerForm({
               className="text-primary underline-offset-2 hover:underline"
               onClick={onNavigateAway}
             >
-              Keys &amp; Tokens
+              MCP &amp; SSH keys
             </Link>
             .
           </p>

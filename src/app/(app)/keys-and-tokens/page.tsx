@@ -18,9 +18,8 @@ import {
 } from '@/components/app/modal';
 import { ConfirmButton } from '@/components/app/confirm';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FormField, PageContainer, PageHeader } from '@/components/app/page';
-import { Callout, CalloutBullets } from '@/components/app/callout';
+import { FormField, PageContainer, PageHeader, Panel } from '@/components/app/page';
+import { cn } from '@/lib/utils';
 import { DataTable } from '@/components/app/data-table';
 import { EmptyState } from '@/components/app/empty-state';
 import { LocalDateTime } from '@/components/app/local-datetime';
@@ -40,42 +39,65 @@ import {
 
 const MODAL_FIELD = 'lg:grid-cols-1 lg:gap-2';
 
+type Section = 'keys' | 'mcp' | 'tokens';
+
+const SECTIONS: Array<{ id: Section; label: string }> = [
+  { id: 'keys', label: 'SSH keys' },
+  { id: 'mcp', label: 'MCP' },
+  { id: 'tokens', label: 'API keys' },
+];
+
 export default function SecurityPage() {
   const { currentWorkspaceId } = useAuthStore();
   const wsId = currentWorkspaceId ?? '';
-  const [tab, setTab] = useState('keys');
+  const [section, setSection] = useState<Section>('keys');
   const [keyOpen, setKeyOpen] = useState(false);
   const [tokenOpen, setTokenOpen] = useState(false);
 
   return (
     <PageContainer>
       <PageHeader
-        title="Keys and tokens"
-        description="SSH keys for servers and API tokens for the CLI and MCP"
+        title="MCP & SSH keys"
+        description="SSH keys for servers, MCP access for AI agents, and API keys for the CLI"
         actions={
-          tab === 'keys' ? (
+          section === 'keys' ? (
             <Button onClick={() => setKeyOpen(true)}>
               <Plus className="size-4" /> Add key
             </Button>
           ) : (
             <Button onClick={() => setTokenOpen(true)}>
-              <Plus className="size-4" /> Create token
+              <Plus className="size-4" /> Create API key
             </Button>
           )
         }
       />
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList variant="line">
-          <TabsTrigger value="keys">SSH keys</TabsTrigger>
-          <TabsTrigger value="tokens">API tokens</TabsTrigger>
-        </TabsList>
-        <TabsContent value="keys" className="pt-6">
-          <SshKeysSection wsId={wsId} open={keyOpen} setOpen={setKeyOpen} />
-        </TabsContent>
-        <TabsContent value="tokens" className="pt-6">
-          <ApiTokensSection wsId={wsId} open={tokenOpen} setOpen={setTokenOpen} />
-        </TabsContent>
-      </Tabs>
+      <div className="grid gap-8 lg:grid-cols-[200px_1fr]">
+        <nav aria-label="Sections" className="flex flex-row gap-1 overflow-x-auto lg:flex-col">
+          {SECTIONS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setSection(item.id)}
+              aria-current={section === item.id ? 'page' : undefined}
+              className={cn(
+                'rounded-md px-3 py-1.5 text-left text-base whitespace-nowrap transition-colors',
+                section === item.id
+                  ? 'bg-secondary font-medium text-foreground'
+                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+        <div className="min-w-0">
+          {section === 'keys' && <SshKeysSection wsId={wsId} open={keyOpen} setOpen={setKeyOpen} />}
+          {section === 'mcp' && <McpGuide />}
+          {section === 'tokens' && (
+            <ApiTokensSection wsId={wsId} open={tokenOpen} setOpen={setTokenOpen} />
+          )}
+        </div>
+      </div>
     </PageContainer>
   );
 }
@@ -348,8 +370,6 @@ function ApiTokensSection({
 
   return (
     <div className="space-y-4">
-      <McpGuide />
-
       <Modal
         open={open}
         onOpenChange={(o) => {
@@ -362,7 +382,7 @@ function ApiTokensSection({
       >
         <ModalContent>
           <ModalHeader>
-            <ModalTitle>Create API token</ModalTitle>
+            <ModalTitle>Create API key</ModalTitle>
           </ModalHeader>
           <ModalBody>
             <ModalDescription className="mb-4">
@@ -404,7 +424,7 @@ function ApiTokensSection({
                   Cancel
                 </Button>
                 <Button onClick={() => createMut.mutate()} disabled={!name || createMut.isPending}>
-                  Create token
+                  Create API key
                 </Button>
               </>
             )}
@@ -443,11 +463,11 @@ function ApiTokensSection({
         emptyState={
           <EmptyState
             icon={Ticket}
-            title="No API tokens yet"
+            title="No API keys yet"
             description="Create a token to access the Peon API."
             action={
               <Button onClick={() => setOpen(true)}>
-                <Plus className="size-4" /> Create token
+                <Plus className="size-4" /> Create API key
               </Button>
             }
           />
@@ -457,7 +477,7 @@ function ApiTokensSection({
   );
 }
 
-/** Shows how to connect an MCP client using a workspace API token. */
+/** Shows how to connect an MCP client using a workspace API key. */
 function McpGuide() {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const mcpUrl = `${origin}/mcp`;
@@ -473,11 +493,15 @@ function McpGuide() {
 }`;
 
   return (
-    <Callout title="How do I connect an MCP client?">
-      <p>
-        API tokens also authenticate the hosted MCP server, so AI agents (Cursor, Claude, etc.) can
-        manage projects and services, deploy and roll back, operate servers, manage env/volumes/tasks/backups,
-        and more — with the same permissions as your role in this workspace. Point your MCP client at:
+    <Panel
+      title="Connect an MCP client"
+      description="Let AI agents such as Cursor or Claude manage this workspace through the hosted MCP server."
+      contentClassName="space-y-4 p-4 text-base"
+    >
+      <p className="text-muted-foreground">
+        API keys also authenticate the MCP server, so agents can manage projects and services,
+        deploy and roll back, operate servers, and manage env, volumes, tasks and backups with the
+        same permissions as your role in this workspace. Point your MCP client at:
       </p>
       <div className="flex min-w-0 items-start gap-2">
         <code className="bg-secondary text-foreground min-w-0 flex-1 break-all rounded-md px-2 py-1 font-mono text-xs">
@@ -495,17 +519,18 @@ function McpGuide() {
           Copy
         </Button>
       </div>
-      <p>Send the token as a bearer header. Example client configuration (streamable HTTP):</p>
+      <p className="text-muted-foreground">
+        Send an API key as a bearer header. Create one under API keys. Example client
+        configuration (streamable HTTP):
+      </p>
       <pre className="bg-secondary text-foreground max-w-full overflow-x-hidden rounded-md p-3 font-mono text-xs leading-relaxed break-all whitespace-pre-wrap">
         {config}
       </pre>
-      <CalloutBullets>
-        <li>
-          The token is scoped to this workspace and inherits your role — members can only reach
-          projects they were added to, and infrastructure tools require owner/admin.
-        </li>
-      </CalloutBullets>
-    </Callout>
+      <p className="text-muted-foreground">
+        The key is scoped to this workspace and inherits your role: members can only reach projects
+        they were added to, and infrastructure tools require owner or admin.
+      </p>
+    </Panel>
   );
 }
 

@@ -421,7 +421,7 @@ function GithubAppGuide({ organization }: { organization: string }) {
         <li>
           Scroll to <b>Private keys</b> → <b>Generate a private key</b>. Add the downloaded{' '}
           <span className="font-mono">.pem</span> under{' '}
-          <ExtLink href="/keys-and-tokens">Keys and tokens → SSH keys</ExtLink>, then select it in the Private
+          <ExtLink href="/keys-and-tokens">MCP &amp; SSH keys → SSH keys</ExtLink>, then select it in the Private
           key dropdown above — it&apos;s used to mint installation tokens for cloning private
           repos.
         </li>

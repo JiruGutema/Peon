@@ -69,7 +69,7 @@ export default function ServersPage() {
           <EmptyState
             icon={Server}
             title="No servers yet"
-            description="Add a Linux host over SSH. You need an SSH key, which you can generate in the form or under Keys and tokens."
+            description="Add a Linux host over SSH. You need an SSH key, which you can generate in the form or under MCP & SSH keys."
             action={addButton}
           />
         }

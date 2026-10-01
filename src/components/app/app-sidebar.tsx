@@ -80,7 +80,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { title: 'Servers', url: '/servers', icon: Server },
       { title: 'Storages', url: '/storages', icon: Database },
-      { title: 'Keys & Tokens', url: '/keys-and-tokens', icon: KeyRound },
+      { title: 'MCP & SSH Keys', url: '/keys-and-tokens', icon: KeyRound },
       { title: 'Git Sources', url: '/sources', icon: GitBranch },
       { title: 'Notifications', url: '/notifications', icon: Bell },
       { title: 'Settings', url: '/settings/general', icon: Settings },

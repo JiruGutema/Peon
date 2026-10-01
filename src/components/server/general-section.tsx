@@ -341,7 +341,7 @@ export function GeneralSection({
                   href="/keys-and-tokens"
                   className="text-primary underline-offset-2 hover:underline"
                 >
-                  Add one under Keys and tokens
+                  Add one under MCP & SSH keys
                 </Link>
                 .
               </>
