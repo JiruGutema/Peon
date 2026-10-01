@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FormField, FormSection, PageContainer, PageHeader } from '@/components/app/page';
 import { useAuthStore } from '@/store/auth';
 import {
@@ -19,6 +18,7 @@ import {
   type NotificationChannel,
 } from '@/services/api/notifications';
 import { NOTIFICATION_EVENTS } from '@/schemas/notifications.schema';
+import { cn } from '@/lib/utils';
 
 const CHANNELS: NotificationChannel[] = [
   'EMAIL',
@@ -98,6 +98,7 @@ const FIELDS: Record<NotificationChannel, FieldDef[]> = {
 export default function NotificationsPage() {
   const { currentWorkspaceId } = useAuthStore();
   const wsId = currentWorkspaceId!;
+  const [channel, setChannel] = useState<NotificationChannel>('EMAIL');
 
   const { data, isLoading } = useQuery({
     queryKey: ['notifications', wsId],
@@ -111,24 +112,34 @@ export default function NotificationsPage() {
       {isLoading ? (
         <Skeleton className="h-64 rounded-lg" />
       ) : (
-        <Tabs defaultValue="EMAIL">
-          <TabsList variant="line" className="max-w-full overflow-x-auto">
+        <div className="grid gap-8 lg:grid-cols-[200px_1fr]">
+          <nav aria-label="Notification channels" className="flex flex-row gap-1 overflow-x-auto lg:flex-col">
             {CHANNELS.map((c) => (
-              <TabsTrigger key={c} value={c}>
+              <button
+                key={c}
+                type="button"
+                onClick={() => setChannel(c)}
+                aria-current={channel === c ? 'page' : undefined}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-left text-base whitespace-nowrap transition-colors',
+                  channel === c
+                    ? 'bg-secondary font-medium text-foreground'
+                    : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
+                )}
+              >
                 {CHANNEL_LABELS[c]}
-              </TabsTrigger>
+              </button>
             ))}
-          </TabsList>
-          {CHANNELS.map((c) => (
-            <TabsContent key={c} value={c} className="pt-6">
-              <ChannelForm
-                workspaceId={wsId}
-                channel={c}
-                existing={data?.find((d) => d.channel === c)}
-              />
-            </TabsContent>
-          ))}
-        </Tabs>
+          </nav>
+          <div className="min-w-0">
+            <ChannelForm
+              key={channel}
+              workspaceId={wsId}
+              channel={channel}
+              existing={data?.find((d) => d.channel === channel)}
+            />
+          </div>
+        </div>
       )}
     </PageContainer>
   );
