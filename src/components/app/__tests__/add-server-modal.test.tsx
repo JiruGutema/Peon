@@ -28,7 +28,6 @@ describe('AddServerModal', () => {
     const onOpenChange = vi.fn();
     render(wrap(<AddServerModal workspaceId="w1" open onOpenChange={onOpenChange} />));
     expect(screen.getByRole('heading', { name: 'Add server' })).toBeInTheDocument();
-    expect(screen.getByText('Connect a Linux host over SSH to deploy and manage services.')).toBeInTheDocument();
     expect(await screen.findByText(/No SSH keys in this workspace yet/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add server' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));

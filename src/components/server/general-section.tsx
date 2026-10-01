@@ -76,15 +76,6 @@ export function GeneralSection({
     onError: (e) => toast.error(e instanceof Error ? e.message : 'Failed'),
   });
 
-  const forgetHostKeyMut = useMutation({
-    mutationFn: () => updateServer(server.id, { hostKeyFingerprint: null }),
-    onSuccess: async () => {
-      onSaved();
-      toast.success('Trusted host key cleared — it is recorded again on the next connection.');
-    },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Failed'),
-  });
-
   const connectMut = useMutation({
     mutationFn: () =>
       validateServer(server.id, {
@@ -241,30 +232,6 @@ export function GeneralSection({
                 <LocalDateTime value={server.settings.agentLastSeenAt} />
               ) : (
                 "—"
-              ),
-            },
-            {
-              label: "Trusted host key",
-              value: server.hostKeyFingerprint ? (
-                <span className="break-all">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono break-all">
-                      {server.hostKeyFingerprint}
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => forgetHostKeyMut.mutate()}
-                      disabled={forgetHostKeyMut.isPending}
-                    >
-                      Forget
-                    </Button>
-                  </span>
-                </span>
-              ) : (
-                <span className="text-muted-foreground">
-                  Not set. It is recorded on the next connection.
-                </span>
               ),
             },
           ]}

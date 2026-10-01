@@ -4,7 +4,6 @@ import {
   Modal,
   ModalBody,
   ModalContent,
-  ModalDescription,
   ModalFooter,
   ModalHeader,
   ModalTitle,
@@ -25,7 +24,7 @@ export function AddServerModal({ workspaceId, open, onOpenChange }: AddServerMod
   const close = () => onOpenChange(false);
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent size="lg">
+      <ModalContent size="xl">
         <ModalHeader>
           <ModalTitle>Add server</ModalTitle>
         </ModalHeader>
@@ -37,12 +36,7 @@ export function AddServerModal({ workspaceId, open, onOpenChange }: AddServerMod
           actionSize="sm"
           renderLayout={(fields, actions) => (
             <>
-              <ModalBody>
-                <ModalDescription className="mb-4">
-                  Connect a Linux host over SSH to deploy and manage services.
-                </ModalDescription>
-                {fields}
-              </ModalBody>
+              <ModalBody>{fields}</ModalBody>
               <ModalFooter>{actions}</ModalFooter>
             </>
           )}
