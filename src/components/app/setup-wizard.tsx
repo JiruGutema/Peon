@@ -113,13 +113,20 @@ export function SetupWizard({ workspaceId: wsId, forceStep = null, onForceStepHa
   };
 
   const currentIndex = current ? SETUP_STEP_ORDER.indexOf(current) : -1;
+  const doneCount = steps.filter((s) => s.done).length;
 
   return (
     <Panel
       id={SETUP_WIZARD_PANEL_ID}
       title="Set up your workspace"
-      description="Four steps to your first deployment"
+      description={`Four steps to your first deployment · ${doneCount} of ${steps.length} done`}
+      actions={
+        <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
+          Getting started
+        </span>
+      }
       padded={false}
+      className="border-primary/40 bg-primary/5 ring-primary/20 ring-1"
     >
       <ol className="divide-y">
         {steps.map((step, i) => {
