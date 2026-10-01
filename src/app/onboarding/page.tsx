@@ -111,9 +111,8 @@ export default function OnboardingPage() {
     <div className="bg-background min-h-screen">
       <div className="mx-auto flex max-w-[560px] flex-col gap-6 px-4 py-10 sm:py-16">
         <div className="space-y-4 text-center">
-          <div className="inline-flex items-center justify-center gap-2 font-semibold">
-            <LogoMark size={32} />
-            <span className="text-lg font-semibold">Peon</span>
+          <div className="inline-flex items-center justify-center">
+            <LogoMark size={40} />
           </div>
           <div className="space-y-1">
             <p className="text-muted-foreground text-sm">
