@@ -1,7 +1,7 @@
 'use client';
 
-import { Suspense, use } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, use, useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Boxes } from 'lucide-react';
@@ -10,10 +10,7 @@ import {
   getProjectMembers,
   removeProjectMember,
 } from '@/services/api/project';
-import {
-  type ServiceKind,
-  type ServiceListItem,
-} from '@/services/api/service';
+import { type ServiceListItem } from '@/services/api/service';
 import { PageContainer, PageHeader } from '@/components/app/page';
 import { DataTable } from '@/components/app/data-table';
 import { LocalDateTime } from '@/components/app/local-datetime';
@@ -26,16 +23,6 @@ import { ProjectSettingsTab } from '@/components/app/project-settings-tab';
 import { NewServiceDialog } from '@/components/app/new-service-dialog';
 import { useAuthStore } from '@/store/auth';
 import { useProjectServices } from '@/lib/queries/service';
-
-const KIND_LABELS: Record<ServiceKind, string> = {
-  GIT_APP: 'Application (Git)',
-  DOCKERFILE: 'Dockerfile',
-  DOCKER_IMAGE: 'Docker Image',
-  STATIC: 'Static Site',
-  NIXPACKS: 'Nixpacks',
-  DATABASE: 'Database',
-  COMPOSE: 'Compose',
-};
 
 export default function ProjectDetailPage({
   params,
@@ -55,6 +42,10 @@ function ProjectDetail_({ params }: { params: Promise<{ projectId: string }> }) 
   const searchParams = useSearchParams();
   const workspaceId = useAuthStore((s) => s.currentWorkspaceId);
   const tab = searchParams.get('tab') ?? 'services';
+  const router = useRouter();
+  const pathname = usePathname();
+  // `?new=service` (from the setup wizard) opens the New service dialog once; captured on mount.
+  const [newServiceOpen, setNewServiceOpen] = useState(() => searchParams.get('new') === 'service');
 
   const { data } = useQuery({ queryKey: ['project', projectId], queryFn: () => getProject(projectId) });
   const { data: members } = useQuery({
@@ -62,6 +53,15 @@ function ProjectDetail_({ params }: { params: Promise<{ projectId: string }> }) 
     queryFn: () => getProjectMembers(projectId),
     enabled: tab === 'members',
   });
+
+  // Strip `new` from the URL so a refresh does not reopen the dialog.
+  useEffect(() => {
+    if (searchParams.get('new') === null) return;
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete('new');
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [searchParams, pathname, router]);
 
   const removeMut = useMutation({
     mutationFn: (userId: string) => removeProjectMember(projectId, userId),
@@ -80,7 +80,11 @@ function ProjectDetail_({ params }: { params: Promise<{ projectId: string }> }) 
           tab === 'services' && data?.canManage ? (
             <>
               <TemplateMarketplaceDialog projectId={projectId} />
-              <NewServiceDialog projectId={projectId} />
+              <NewServiceDialog
+                projectId={projectId}
+                open={newServiceOpen}
+                onOpenChange={setNewServiceOpen}
+              />
             </>
           ) : undefined
         }
@@ -124,9 +128,9 @@ function ServicesTab({ projectId }: { projectId: string }) {
           cell: (svc) => (
             <span className="flex min-w-0 flex-col">
               <span className="truncate">{svc.name}</span>
-              <span className="text-muted-foreground truncate text-sm font-normal">
-                {svc.description || KIND_LABELS[svc.kind]}
-              </span>
+              {svc.description ? (
+                <span className="text-muted-foreground truncate text-sm font-normal">{svc.description}</span>
+              ) : null}
             </span>
           ),
         },

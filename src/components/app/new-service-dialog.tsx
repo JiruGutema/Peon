@@ -66,13 +66,23 @@ const DATABASE_ENGINES: { value: string; label: string }[] = [
 export function NewServiceDialog({
   projectId,
   onCreated,
+  open: openProp,
+  onOpenChange,
 }: {
   projectId: string;
   onCreated?: (serviceId: string) => void;
+  /** Optional controlled open state (e.g. opened by `?new=service` from the setup wizard). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const qc = useQueryClient();
   const workspaceId = useAuthStore((s) => s.currentWorkspaceId);
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (next: boolean) => {
+    if (openProp === undefined) setOpenState(next);
+    onOpenChange?.(next);
+  };
 
   const [kind, setKind] = useState<ServiceKind>('GIT_APP');
   const [name, setName] = useState('');
