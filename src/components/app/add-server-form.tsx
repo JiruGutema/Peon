@@ -52,7 +52,6 @@ export function AddServerForm({
   const [port, setPort] = useState('22');
   const [user, setUser] = useState('root');
   const [privateKeyId, setPrivateKeyId] = useState(defaultPrivateKeyId ?? '');
-  const [hostKeyFingerprint, setHostKeyFingerprint] = useState('');
   const [proxyType, setProxyType] = useState<ProxyType>('TRAEFIK');
   const [showNewKey, setShowNewKey] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
@@ -71,7 +70,6 @@ export function AddServerForm({
     setPort('22');
     setUser('root');
     setPrivateKeyId(defaultPrivateKeyId ?? '');
-    setHostKeyFingerprint('');
     setProxyType('TRAEFIK');
     setShowNewKey(false);
     setNewKeyName('');
@@ -88,7 +86,6 @@ export function AddServerForm({
         user,
         privateKeyId,
         proxyType,
-        ...(hostKeyFingerprint.trim() ? { hostKeyFingerprint: hostKeyFingerprint.trim() } : {}),
       }),
     onSuccess: async (server) => {
       await qc.invalidateQueries({ queryKey: ['servers', wsId] });
@@ -129,12 +126,16 @@ export function AddServerForm({
   };
 
   const fields = (
-    <div className="space-y-4">
+    <div className="grid gap-4 sm:grid-cols-2">
       <div className="space-y-2">
         <Label htmlFor="s-name">Name</Label>
         <Input id="s-name" value={name} onChange={(e) => setName(e.target.value)} />
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="space-y-2">
+        <Label htmlFor="s-user">User</Label>
+        <Input id="s-user" value={user} onChange={(e) => setUser(e.target.value)} />
+      </div>
+      <div className="grid grid-cols-3 gap-2 sm:col-span-2">
         <div className="col-span-2 space-y-2">
           <Label htmlFor="s-ip">IP / Hostname</Label>
           <Input
@@ -143,35 +144,13 @@ export function AddServerForm({
             onChange={(e) => setIp(e.target.value)}
             placeholder="203.0.113.10 or host.example.com"
           />
-          <p className="text-muted-foreground text-xs">IPv4, IPv6, or DNS hostname.</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="s-port">Port</Label>
           <Input id="s-port" value={port} onChange={(e) => setPort(e.target.value)} />
         </div>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="s-user">User</Label>
-        <Input id="s-user" value={user} onChange={(e) => setUser(e.target.value)} />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="s-hostkey">SSH host key fingerprint (optional)</Label>
-        <Input
-          id="s-hostkey"
-          placeholder="SHA256:…"
-          value={hostKeyFingerprint}
-          onChange={(e) => setHostKeyFingerprint(e.target.value)}
-        />
-        <p className="text-muted-foreground text-xs">
-          Pin the host key so the very first connection is verified too. Leave blank and
-          Peon records the key on first connect. Read it from the server with{' '}
-          <code className="font-mono">
-            ssh-keyscan -t ed25519 {ip.trim() || '<host>'} | ssh-keygen -lf -
-          </code>
-          .
-        </p>
-      </div>
-      <div className="space-y-2">
+      <div className="space-y-2 sm:col-span-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5">
             <Label>SSH key</Label>
