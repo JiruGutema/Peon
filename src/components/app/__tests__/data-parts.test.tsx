@@ -29,10 +29,11 @@ describe('StatusBadge', () => {
 });
 
 describe('StatCard', () => {
-  it('renders value in mono display size', () => {
+  it('renders value in tabular sans display size', () => {
     render(<StatCard label="Servers" value={3} />);
     const v = screen.getByText('3');
-    expect(v.className).toContain('font-mono');
+    expect(v.className).toContain('tabular-nums');
+    expect(v.className).not.toContain('font-mono');
     expect(v.className).toContain('text-display');
   });
   it('colours the value with the destructive tone', () => {
@@ -69,7 +70,11 @@ describe('DataTable', () => {
     const link = screen.getByRole('link', { name: 'web' });
     expect(link.className.split(/\s+/)).not.toContain('relative');
     expect(link.className).toContain('after:inset-0');
-    expect(screen.getByRole('button', { name: 'Delete' }).parentElement?.className).toContain('z-10');
+    const wrapper = screen.getByRole('button', { name: 'Delete' }).parentElement!;
+    expect(wrapper.className).toContain('z-10');
+    // Plain cell text lets clicks fall through to the row link; controls opt back in.
+    expect(wrapper.className.split(/\s+/)).toContain('pointer-events-none');
+    expect(wrapper.className).toContain('[&_button]:pointer-events-auto');
   });
   it('makes onRowClick rows keyboard-activatable', () => {
     const onRowClick = vi.fn();
@@ -80,6 +85,18 @@ describe('DataTable', () => {
     expect(onRowClick).toHaveBeenCalledWith({ id: '1', name: 'web' });
     fireEvent.keyDown(row, { key: ' ' });
     expect(onRowClick).toHaveBeenCalledTimes(2);
+  });
+  it('ignores Enter and Space on a control inside an onRowClick row', () => {
+    const onRowClick = vi.fn();
+    const withAction = [
+      ...columns,
+      { key: 'actions', header: 'Actions', cell: () => <button type="button">Restart</button> },
+    ];
+    render(<DataTable columns={withAction} rows={[{ id: '1', name: 'web' }]} rowKey={(r) => r.id} onRowClick={onRowClick} />);
+    const inner = screen.getByRole('button', { name: 'Restart' });
+    fireEvent.keyDown(inner, { key: 'Enter' });
+    fireEvent.keyDown(inner, { key: ' ' });
+    expect(onRowClick).not.toHaveBeenCalled();
   });
 });
 

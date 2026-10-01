@@ -246,18 +246,20 @@ export function GeneralSection({
             {
               label: "Trusted host key",
               value: server.hostKeyFingerprint ? (
-                <span className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono break-all">
-                    {server.hostKeyFingerprint}
+                <span className="break-all">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono break-all">
+                      {server.hostKeyFingerprint}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => forgetHostKeyMut.mutate()}
+                      disabled={forgetHostKeyMut.isPending}
+                    >
+                      Forget
+                    </Button>
                   </span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => forgetHostKeyMut.mutate()}
-                    disabled={forgetHostKeyMut.isPending}
-                  >
-                    Forget
-                  </Button>
                 </span>
               ) : (
                 <span className="text-muted-foreground">

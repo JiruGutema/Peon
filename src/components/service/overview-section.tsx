@@ -19,6 +19,7 @@ import { StatusBadge } from '@/components/app/status-badge';
 import { KindChip } from '@/components/app/kind-chip';
 import { LocalDateTime } from '@/components/app/local-datetime';
 import { formatDuration } from '@/lib/datetime';
+import { cn } from '@/lib/utils';
 
 const KIND_LABELS: Record<string, string> = {
   GIT_APP: 'Application (Git)',
@@ -171,23 +172,23 @@ export function OverviewSection({
           </div>
         }
       >
-        <div className="grid gap-6 md:grid-cols-[minmax(280px,360px)_1fr] md:items-start">
-          <div className="border-border from-secondary to-background relative aspect-[4/3] w-full overflow-hidden rounded-md border bg-gradient-to-br">
-            {productionDeployment?.hasPreview ? (
-              // eslint-disable-next-line @next/next/no-img-element
+        {/* No placeholder tile: without a real deployment preview the details span the full width. */}
+        <div
+          className={cn(
+            'grid gap-6 md:items-start',
+            productionDeployment?.hasPreview && 'md:grid-cols-[minmax(280px,360px)_1fr]',
+          )}
+        >
+          {productionDeployment?.hasPreview ? (
+            <div className="border-border relative aspect-[4/3] w-full overflow-hidden rounded-md border">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={deploymentPreviewUrl(productionDeployment.id)}
                 alt={`${svc.name} deployment preview`}
                 className="size-full object-cover object-top"
               />
-            ) : (
-              <div className="grid size-full place-items-center">
-                <span className="text-muted-foreground text-display font-semibold">
-                  {svc.name[0]?.toUpperCase()}
-                </span>
-              </div>
-            )}
-          </div>
+            </div>
+          ) : null}
 
           <KeyValueList
             className="-my-2.5"

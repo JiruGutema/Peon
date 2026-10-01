@@ -27,7 +27,7 @@ export function StatCard({
         <span>{label}</span>
         {Icon ? <Icon className={cn('size-4', toneClass)} /> : null}
       </div>
-      <div className={cn('text-display mt-2 font-mono font-semibold tracking-tight', toneClass)}>{value}</div>
+      <div className={cn('text-display mt-2 font-sans font-semibold tracking-tight tabular-nums', toneClass)}>{value}</div>
       {hint ? <p className="text-muted-foreground mt-1 text-sm">{hint}</p> : null}
     </div>
   );

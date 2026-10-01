@@ -67,6 +67,8 @@ export function DataTable<T>({
                     onKeyDown={
                       onRowClick
                         ? (e) => {
+                            // Ignore keys bubbling up from buttons/links inside the row.
+                            if (e.target !== e.currentTarget) return;
                             if (e.key === 'Enter' || e.key === ' ') {
                               if (e.key === ' ') e.preventDefault();
                               onRowClick(row);
@@ -86,7 +88,9 @@ export function DataTable<T>({
                             {c.cell(row)}
                           </Link>
                         ) : href ? (
-                          <span className="relative z-10">{c.cell(row)}</span>
+                          <span className="relative z-10 pointer-events-none [&_a]:pointer-events-auto [&_button]:pointer-events-auto [&_[role=button]]:pointer-events-auto [&_input]:pointer-events-auto [&_select]:pointer-events-auto">
+                            {c.cell(row)}
+                          </span>
                         ) : (
                           c.cell(row)
                         )}
